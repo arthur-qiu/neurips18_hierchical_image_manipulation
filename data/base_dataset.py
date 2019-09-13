@@ -59,7 +59,7 @@ def get_transform_params(full_size, inst_info=None, class_of_interest=None,
           crop_single_object_with_bbox(bbox, orig_w, orig_h, \
           config['img_to_obj_ratio'], config['patch_to_obj_ratio'], \
           target_size, random_crop)
-
+    print(crop_pos)
     output_dict = {
         'crop_pos': crop_pos,
         'flip': flip,
