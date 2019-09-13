@@ -290,6 +290,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         self.fake_image1 = fake_image1.cpu().data[0]
         self.real_image = real_image.cpu().data[0]
         self.input_label = input_mask.cpu().data[0]
+        self.input_label1 = input_mask1.cpu().data[0]
         self.input_image = cond_image.cpu().data[0] 
 
         return fake_image
