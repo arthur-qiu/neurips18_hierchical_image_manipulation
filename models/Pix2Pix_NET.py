@@ -238,7 +238,9 @@ class GlobalTwoStreamGenerator(nn.Module):
             mask_feat = mask_feat.repeat(1,self.feat_dim,1,1)
         # do embedding
         embed_feat = self.forward_embedder(ctx_feat, obj_feat, mask_feat)
+        print(0, embed_feat.shape)
         output = self.forward_decoder(self.decoder, self.outputEmbedder, embed_feat, ctx_feats)
+        print(1,output.shape)
         if self.use_output_gate:
             mask_output = mask.repeat(1, self.output_nc, 1, 1)
             #output = (1-mask_output)*img + mask_output*output
