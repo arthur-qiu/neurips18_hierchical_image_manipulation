@@ -128,7 +128,7 @@ class SegmentationAdvDataset(BaseDataset):
         outputs['input_bbox'] = torch.from_numpy(input_bbox)
         outputs['output_bbox'] = torch.from_numpy(output_bbox)
         outputs['mask_in'] = mask_in # (1x1xHxW)
-        print(mask_in)
+        print(mask_in.shape,torch.max(mask_in),torch.min(mask_in))
         outputs['mask_object_in'] = mask_object_in # (1xCxHxW)
         outputs['mask_context_in'] = mask_context_in # (1xCxHxW)
         outputs['mask_out'] = mask_out # (1x1xHxW)
