@@ -46,7 +46,8 @@ class SegmentationAdvDataset(BaseDataset):
         self.inst_paths_all = sorted(make_dataset(self.dir_inst))
         self.inst_paths = [p for p in self.inst_paths_all if p.endswith('_instanceIds.png')]
         self.dir_bbox = os.path.join(opt.dataroot, opt.phase + '_bbox')
-        self.bbox_paths = sorted(make_dataset(self.dir_bbox))
+        self.bbox_paths_all = sorted(make_dataset(self.dir_bbox))
+        self.bbox_paths = [p for p in self.bbox_paths_all if p.endswith('_instanceIds.json')]
 
         self.dataset_size = len(self.A_paths)
         self.use_bbox = hasattr(self.opt, 'use_bbox') and (self.opt.use_bbox)
@@ -62,6 +63,9 @@ class SegmentationAdvDataset(BaseDataset):
         bbox_path = self.bbox_paths[index]
         with open(bbox_path, 'r') as f:
             inst_info = json.load(f)
+        bbox_path1 = bbox_path[:-5]+'1.json'
+        with open(bbox_path1, 'r') as f:
+            inst_info1 = json.load(f)
 
         raw_inputs = dict()
         A_path = self.A_paths[index]
@@ -77,7 +81,7 @@ class SegmentationAdvDataset(BaseDataset):
             B_path = self.B_paths[index]
             raw_inputs['image'] = Image.open(B_path).convert('RGB')
             raw_inputs['image_path'] = B_path
-        return raw_inputs, inst_info
+        return raw_inputs, inst_info, inst_info1
 
     def preprocess_inputs(self, raw_inputs, params):
         outputs = dict()
@@ -138,7 +142,7 @@ class SegmentationAdvDataset(BaseDataset):
         return outputs
 
     def __getitem__(self, index):
-      raw_inputs, inst_info = self.get_raw_inputs(index)
+      raw_inputs, inst_info, inst_info1 = self.get_raw_inputs(index)
       #
       full_size = raw_inputs['label'].size
       params = get_transform_params(full_size, inst_info,

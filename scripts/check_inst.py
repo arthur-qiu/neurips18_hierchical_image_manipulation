@@ -14,8 +14,8 @@ for i in range(len(ys)):
     if b[ys[i],xs[i]] != 26006:
         print(ys[i],xs[i])
     b[ys[i], xs[i]] = b[ys[i], xs[i]] + 50
-
-d = Image.fromarray(b)
-d.save('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/semantic/munster_000014_000019_gtFine_instanceIds1.png')
+#
+# d = Image.fromarray(b)
+# d.save('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/semantic/munster_000014_000019_gtFine_instanceIds1.png')
 
 print(xmin.item(), ymin.item(), xmax.item(), ymax.item())
