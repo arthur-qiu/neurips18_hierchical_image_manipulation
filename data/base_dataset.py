@@ -114,7 +114,7 @@ def crop_single_object(inst_info, class_of_interest,
     crop_object =  crop_box_with_margin(bbox_selected['bbox'], w, h, \
         patch_to_obj_ratio, random_crop)
     bbox_in_context = get_bbox_in_context(bbox_selected, crop_pos, target_size)
-    print(crop_pos,crop_object,bbox_in_context)
+    print(bbox_selected,crop_pos,crop_object,bbox_in_context)
     if flip:
         tmp_xmin = bbox_in_context[0]
         tmp_xmax = bbox_in_context[2]
