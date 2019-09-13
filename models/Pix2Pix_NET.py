@@ -238,13 +238,34 @@ class GlobalTwoStreamGenerator(nn.Module):
             mask_feat = mask_feat.repeat(1,self.feat_dim,1,1)
         # do embedding
         embed_feat = self.forward_embedder(ctx_feat, obj_feat, mask_feat)
-        print(0, embed_feat.shape)
         output = self.forward_decoder(self.decoder, self.outputEmbedder, embed_feat, ctx_feats)
-        print(1,output.shape)
         if self.use_output_gate:
             mask_output = mask.repeat(1, self.output_nc, 1, 1)
             #output = (1-mask_output)*img + mask_output*output
             output = (1-mask_output)*img[:,:3,:,:] + mask_output*output
+
+        return output
+
+    def g_in(self, img, label, mask):
+        ctx_feat = obj_feat = mask_feat = 0
+        ctx_feats = []
+        if 'ctx' in self.which_stream:
+            ctx_feat, ctx_feats = self.forward_encoder(self.ctx_inputEmbedder, self.ctx_downsampler, img, self.use_skip)
+        if 'label' in self.which_stream:
+            obj_feat, _ = self.forward_encoder(self.obj_inputEmbedder, self.obj_downsampler, label, False)
+        if self.which_stream == 'ctx_label':
+            mask_feat = self.mask_downsampler(mask)
+            mask_feat = mask_feat.repeat(1, self.feat_dim, 1, 1)
+        # do embedding
+        embed_feat = self.forward_embedder(ctx_feat, obj_feat, mask_feat)
+        return embed_feat, ctx_feats
+
+    def g_out(self, embed_feat, ctx_feats, img, mask):
+        output = self.forward_decoder(self.decoder, self.outputEmbedder, embed_feat, ctx_feats)
+        if self.use_output_gate:
+            mask_output = mask.repeat(1, self.output_nc, 1, 1)
+            # output = (1-mask_output)*img + mask_output*output
+            output = (1 - mask_output) * img[:, :3, :, :] + mask_output * output
 
         return output
 

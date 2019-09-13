@@ -149,14 +149,11 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             # create one-hot vector for label map 
             size = label_map.size()
             oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
-            input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
+            # [1, 1, 256, 256] (1, 28)
+            input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_() # [1, 35, 256, 256] (0, 1)
             input_label = input_label.scatter_(1, label_map.data.long().cuda(), 1.0)
             input_label1 = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
             input_label1 = input_label1.scatter_(1, label_map1.data.long().cuda(), 1.0)
-            print(label_map.shape)
-            print(torch.max(label_map),torch.min(label_map))
-            print(input_label.shape)
-            print(torch.max(input_label), torch.min(input_label))
 
 
         # get edges from instance map
@@ -321,8 +318,11 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             fake_image1 = self.netG.forward(input_label1, mask_in)
         elif self.netG_type == 'global_twostream':
             mask_in = mask_in.cuda()
-            fake_image = self.netG.forward(cond_image, input_mask, mask_in)
-            fake_image1 = self.netG.forward(cond_image, input_mask1, mask_in)
+            fake_feature, ctx_feats = self.netG.g_in(cond_image, input_mask, mask_in)
+            fake_feature1, ctx_feats1 = self.netG.g_in(cond_image, input_mask1, mask_in)
+            fake_image = self.netG.g_out((fake_feature+fake_feature1)/2,ctx_feats1,cond_image,mask_in)
+            fake_image1 = self.netG.g_out((fake_feature + fake_feature1) / 2, (ctx_feats+ctx_feats1)/2, cond_image, mask_in)
+            
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
