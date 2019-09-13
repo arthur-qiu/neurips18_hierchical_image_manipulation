@@ -39,7 +39,7 @@ for i, data in enumerate(dataset):
     #         mask_out=Variable(data['mask_out'])
     #         )
 
-    generated = model.interp(
+    generated = model.interp_attack(
         label=Variable(data['label']),
         label1=Variable(data['label1']),
         inst=Variable(data['inst']),

@@ -320,7 +320,44 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             mask_in = mask_in.cuda()
             fake_feature, ctx_feats = self.netG.g_in(cond_image, input_mask, mask_in)
             fake_feature1, ctx_feats1 = self.netG.g_in(cond_image, input_mask1, mask_in)
-            fake_image = self.netG.forward(cond_image, input_mask, mask_in)
+            fake_image = self.netG.forward(cond_image, input_mask1, mask_in)
+            fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
+
+
+        self.fake_image = fake_image.cpu().data[0]
+        self.fake_image1 = fake_image1.cpu().data[0]
+        self.real_image = real_image.cpu().data[0]
+        self.input_label = input_mask.cpu().data[0]
+        self.input_label1 = input_mask1.cpu().data[0]
+        self.input_image = cond_image.cpu().data[0]
+
+        return fake_image
+
+    def interp_attack(self, label, label1, inst, inst1, image, mask_in, mask_out):
+        # Encode Inputs
+        input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
+                                                                                                      inst, inst1,
+                                                                                                      image,
+                                                                                                      mask_in=mask_in,
+                                                                                                      infer=True)
+        mask_in = mask_in.cuda()
+
+        # NOTE(sh): modified with additional image input
+        input_mask = input_label.clone()
+        input_mask1 = input_label1.clone()
+        input_label = torch.cat((input_label, cond_image), 1)
+        input_label1 = torch.cat((input_label1, cond_image), 1)
+
+        # Fake Generation
+        input_concat = input_label
+        if self.netG_type == 'global':
+            fake_image = self.netG.forward(input_concat, mask_in)
+            fake_image1 = self.netG.forward(input_label1, mask_in)
+        elif self.netG_type == 'global_twostream':
+            mask_in = mask_in.cuda()
+            fake_feature, ctx_feats = self.netG.g_in(cond_image, input_mask, mask_in)
+            fake_feature1, ctx_feats1 = self.netG.g_in(cond_image, input_mask1, mask_in)
+            fake_image = self.netG.forward(cond_image, input_mask1, mask_in)
             fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
 
 
