@@ -145,7 +145,7 @@ class SegmentationAdvDataset(BaseDataset):
       raw_inputs, inst_info, inst_info1 = self.get_raw_inputs(index)
       #
       full_size = raw_inputs['label'].size
-      params = get_transform_params(full_size, inst_info,
+      params = get_transform_params(full_size, inst_info, inst_info1,
                                     self.class_of_interest, self.config,
                                     random_crop=self.opt.random_crop)
       outputs = self.preprocess_inputs(raw_inputs, params)
