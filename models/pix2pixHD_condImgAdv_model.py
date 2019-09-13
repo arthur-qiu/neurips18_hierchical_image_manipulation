@@ -141,21 +141,28 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
     def name(self):
         return 'Pix2PixHDModel_condImgAdv'
 
-    def encode_input(self, label_map, inst_map=None, real_image=None, feat_map=None, mask_in=None, infer=False):             
+    def encode_input(self, label_map, label_map1, inst_map=None, inst_map1=None, real_image=None, feat_map=None, mask_in=None, infer=False):
         if self.opt.label_nc == 0:
             input_label = label_map.data.cuda()
+            input_label1 = label_map1.data.cuda()
         else:
             # create one-hot vector for label map 
             size = label_map.size()
             oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
             input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
             input_label = input_label.scatter_(1, label_map.data.long().cuda(), 1.0)
+            input_label1 = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
+            input_label1 = input_label1.scatter_(1, label_map1.data.long().cuda(), 1.0)
+
 
         # get edges from instance map
         if not self.opt.no_instance:
             inst_map = inst_map.data.cuda()
             edge_map = self.get_edges(inst_map)
-            input_label = torch.cat((input_label, edge_map), dim=1) 
+            inst_map1 = inst_map1.data.cuda()
+            edge_map1 = self.get_edges(inst_map1)
+            input_label = torch.cat((input_label, edge_map), dim=1)
+            input_label1 = torch.cat((input_label1, edge_map1), dim=1)
         input_label = Variable(input_label, volatile=infer)
 
         # real images for training
@@ -171,7 +178,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             if self.opt.load_features:
                 feat_map = Variable(feat_map.data.cuda())
 
-        return input_label, inst_map, real_image, feat_map, cond_image
+        return input_label, input_label1, inst_map, inst_map1, real_image, feat_map, cond_image
 
     def discriminate(self, input_label, test_image, mask, use_pool=False):
         input_concat = torch.cat((input_label, test_image.detach()), dim=1)
@@ -195,9 +202,9 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         losses, generated = self.forward(label, inst, image, feat, mask_in, mask_out, infer)
         return losses, generated 
         
-    def forward(self, label, inst, image, feat, mask_in, mask_out, infer=False):
+    def forward(self, label, label1, inst, inst1, image, feat, mask_in, mask_out, infer=False):
         # Encode Inputs
-        input_label, inst_map, real_image, feat_map, cond_image = self.encode_input(label, inst, image, feat, mask_in=mask_in)  
+        input_label, input_label1, inst_map, inst_map1, real_image, feat_map, cond_image = self.encode_input(label, label1, inst, inst1, image, feat, mask_in=mask_in)
 
         # NOTE(sh): modified with additional image input
         input_mask = input_label.clone()
@@ -210,7 +217,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             fake_image = self.netG.forward(cond_image, input_mask, mask_in)
 
         # Fake Detection and Loss
-        if self.no_imgCond: 
+        if self.no_imgCond:
             netD_cond = input_mask
         else:
             netD_cond = input_label
@@ -260,23 +267,27 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
     def inference(self, label, label1, inst, inst1, image, mask_in, mask_out):
         # Encode Inputs        
-        input_label, inst_map, real_image, _, cond_image = self.encode_input(label, inst, image, mask_in=mask_in, infer=True)
+        input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1, inst, inst1, image, mask_in=mask_in, infer=True)
         mask_in = mask_in.cuda()
 
         # NOTE(sh): modified with additional image input
         input_mask = input_label.clone()
+        input_mask1 = input_label1.clone()
         input_label = torch.cat((input_label, cond_image), 1)
+        input_label1 = torch.cat((input_label1, cond_image), 1)
         
         # Fake Generation
         input_concat = input_label  
         if self.netG_type == 'global':
             fake_image = self.netG.forward(input_concat, mask_in)
+            fake_image1 = self.netG.forward(input_label1, mask_in)
         elif self.netG_type == 'global_twostream':
             mask_in = mask_in.cuda()
-            print(cond_image.shape)
             fake_image = self.netG.forward(cond_image, input_mask, mask_in)
+            fake_image1 = self.netG.forward(cond_image, input_mask1, mask_in)
 
         self.fake_image = fake_image.cpu().data[0]
+        self.fake_image1 = fake_image1.cpu().data[0]
         self.real_image = real_image.cpu().data[0]
         self.input_label = input_mask.cpu().data[0]
         self.input_image = cond_image.cpu().data[0] 
@@ -296,7 +307,9 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             ('input_label', util.tensor2label(self.input_label, self.opt.label_nc)),
             ('input_image', util.tensor2im(self.input_image)),
             ('real_image', util.tensor2im(self.real_image)),
-            ('synthesized_image', util.tensor2im(self.fake_image))
+            ('synthesized_image', util.tensor2im(self.fake_image)),
+            ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
+            ('synthesized_image1', util.tensor2im(self.fake_image1))
             ])
 
     def save(self, which_epoch):
