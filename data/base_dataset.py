@@ -53,13 +53,13 @@ def get_transform_params(full_size, inst_info=None, class_of_interest=None,
           orig_w, orig_h, config['prob_bg'], config['img_to_obj_ratio'],
           config['patch_to_obj_ratio'], min_box_size, max_box_size,
           target_size, flip, random_crop)
+      print(crop_pos)
     else:
       # use the specified bounding box
       crop_pos, crop_object, bbox_in_context, bbox_cls, bbox_inst_id = \
           crop_single_object_with_bbox(bbox, orig_w, orig_h, \
           config['img_to_obj_ratio'], config['patch_to_obj_ratio'], \
           target_size, random_crop)
-    print(crop_pos)
     output_dict = {
         'crop_pos': crop_pos,
         'flip': flip,
