@@ -5,13 +5,13 @@ import torch
 
 def create_model(opt, data_size=None):
     if opt.model == 'AE_maskgen_twostream':
-      from TwoStreamAE_mask import TwoStreamAE_mask
+      from .TwoStreamAE_mask import TwoStreamAE_mask
       model = TwoStreamAE_mask(opt)
     elif opt.model == 'pix2pixHD_condImg':
-      from pix2pixHD_condImg_model import Pix2PixHDModel_condImg
+      from .pix2pixHD_condImg_model import Pix2PixHDModel_condImg
       model = Pix2PixHDModel_condImg(opt)
     elif opt.model == 'pix2pixHD_condImgColor':
-      from pix2pixHD_condImgColor_model import Pix2PixHDModel_condImgColor
+      from .pix2pixHD_condImgColor_model import Pix2PixHDModel_condImgColor
       model = Pix2PixHDModel_condImgColor(opt)
     else:
         raise NotImplementedError("the model is not implemented")

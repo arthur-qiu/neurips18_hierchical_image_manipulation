@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from layer_util import *
+from .layer_util import *
 import numpy as np
 import functools
 
