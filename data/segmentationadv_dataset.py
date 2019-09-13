@@ -31,7 +31,8 @@ class SegmentationAdvDataset(BaseDataset):
         ### input A (label maps)
         dir_A = '_A' if self.opt.label_nc == 0 else '_label'
         self.dir_A = os.path.join(opt.dataroot, opt.phase + dir_A)
-        self.A_paths = sorted(make_dataset(self.dir_A))
+        self.A_paths_all = sorted(make_dataset(self.dir_A))
+        self.A_paths = [p for p in self.A_paths_all if p.endswith('_labelIds.png')]
 
         ### input B (real images)
         if (opt.isTrain and (not hasattr(self.opt, 'use_bbox'))) or \
@@ -42,7 +43,8 @@ class SegmentationAdvDataset(BaseDataset):
 
         ### instance maps
         self.dir_inst = os.path.join(opt.dataroot, opt.phase + '_inst')
-        self.inst_paths = sorted(make_dataset(self.dir_inst))
+        self.inst_paths_all = sorted(make_dataset(self.dir_inst))
+        self.inst_paths = [p for p in self.inst_paths_all if p.endswith('_instanceIds.png')]
         self.dir_bbox = os.path.join(opt.dataroot, opt.phase + '_bbox')
         self.bbox_paths = sorted(make_dataset(self.dir_bbox))
 
