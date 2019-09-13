@@ -320,8 +320,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             mask_in = mask_in.cuda()
             fake_feature, ctx_feats = self.netG.g_in(cond_image, input_mask, mask_in)
             fake_feature1, ctx_feats1 = self.netG.g_in(cond_image, input_mask1, mask_in)
-            fake_image = self.netG.g_out((fake_feature+fake_feature1)/2,ctx_feats1,cond_image,mask_in)
-            fake_image1 = self.netG.g_out((fake_feature + fake_feature1) / 2, ctx_feats, cond_image, mask_in)
+            fake_image = self.netG.forward(cond_image, input_mask, mask_in)
+            fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
 
 
         self.fake_image = fake_image.cpu().data[0]
