@@ -322,7 +322,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             fake_feature1, ctx_feats1 = self.netG.g_in(cond_image, input_mask1, mask_in)
             fake_image = self.netG.g_out((fake_feature+fake_feature1)/2,ctx_feats1,cond_image,mask_in)
             fake_image1 = self.netG.g_out((fake_feature + fake_feature1) / 2, (ctx_feats+ctx_feats1)/2, cond_image, mask_in)
-            
+
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]

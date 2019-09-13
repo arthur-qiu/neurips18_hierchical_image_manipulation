@@ -29,15 +29,25 @@ for i, data in enumerate(dataset):
     if i >= opt.how_many:
         break
 
-    generated = model.inference(
-            label=Variable(data['label']),
-            label1=Variable(data['label1']),
-            inst=Variable(data['inst']),
-            inst1=Variable(data['inst1']),
-            image=Variable(data['image']),
-            mask_in=Variable(data['mask_in']),
-            mask_out=Variable(data['mask_out'])
-            ) 
+    # generated = model.inference(
+    #         label=Variable(data['label']),
+    #         label1=Variable(data['label1']),
+    #         inst=Variable(data['inst']),
+    #         inst1=Variable(data['inst1']),
+    #         image=Variable(data['image']),
+    #         mask_in=Variable(data['mask_in']),
+    #         mask_out=Variable(data['mask_out'])
+    #         )
+
+    generated = model.interp(
+        label=Variable(data['label']),
+        label1=Variable(data['label1']),
+        inst=Variable(data['inst']),
+        inst1=Variable(data['inst1']),
+        image=Variable(data['image']),
+        mask_in=Variable(data['mask_in']),
+        mask_out=Variable(data['mask_out'])
+    )
 
     visuals = model.get_current_visuals()
 
