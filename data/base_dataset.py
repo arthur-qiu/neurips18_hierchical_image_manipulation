@@ -18,7 +18,7 @@ class BaseDataset(data.Dataset):
     def initialize(self, opt):
         pass
 
-def get_transform_params(full_size, inst_info=None, inst_info1=None, class_of_interest=None,
+def get_transform_params(full_size, inst_info=None, class_of_interest=None,
                          config=None, bbox=None, random_crop=True):
     """Prepares the transform parameters (tight object window, soft object window,
         context window, & image window) for cropping.
