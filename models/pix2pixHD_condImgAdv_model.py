@@ -141,8 +141,10 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
         #init segnet
-        self.seg_mean = Variable(torch.FloatTensor([0.29010095242892997, 0.32808144844279574, 0.28696394422942517]).cuda())
-        self.seg_std = Variable(torch.FloatTensor([0.1829540508368939, 0.18656561047509476, 0.18447508988480435]).cuda())
+        seg_mean = torch.FloatTensor([0.29010095242892997, 0.32808144844279574, 0.28696394422942517]).view(1, 3, 1, 1)
+        self.seg_mean = Variable(seg_mean.cuda())
+        seg_std = torch.FloatTensor([0.1829540508368939, 0.18656561047509476, 0.18447508988480435])
+        self.seg_std = Variable(seg_std.cuda())
         single_model = DRNSeg('drn_d_22', 19, pretrained_model=None, pretrained=False)
         single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
         self.netS = torch.nn.DataParallel(single_model).cuda()
