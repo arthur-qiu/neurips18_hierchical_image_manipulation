@@ -14,6 +14,7 @@ from .base_model import BaseModel
 from .layer_util import *
 import util.util as util
 from collections import OrderedDict
+from seg.data_process import id2label_tensor
 
 NULLVAL = 0.0
 
@@ -335,6 +336,9 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
     def interp_attack(self, label, label1, inst, inst1, image, mask_in, mask_out):
         # Encode Inputs
+        predict_label = id2label_tensor(label1)
+        print(torch.unique(predict_label))
+
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
                                                                                                       image,
