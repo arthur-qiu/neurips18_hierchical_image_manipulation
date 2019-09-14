@@ -15,6 +15,7 @@ from .layer_util import *
 import util.util as util
 from collections import OrderedDict
 from seg.data_process import id2label_tensor
+from seg.segment import DRNSeg
 
 NULLVAL = 0.0
 
@@ -138,6 +139,13 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             # optimizer D                        
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
+
+        #init segnet
+        self.seg_mean = [0.29010095242892997, 0.32808144844279574, 0.28696394422942517]
+        self.seg_std = [0.1829540508368939, 0.18656561047509476, 0.18447508988480435]
+        single_model = DRNSeg('drn_d_22', 19, pretrained_model=None, pretrained=False)
+        single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
+        self.netS = torch.nn.DataParallel(single_model).cuda()
 
     def name(self):
         return 'Pix2PixHDModel_condImgAdv'
@@ -336,8 +344,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
     def interp_attack(self, label, label1, inst, inst1, image, mask_in, mask_out):
         # Encode Inputs
-        predict_label = id2label_tensor(label1)
-        print(torch.unique(predict_label))
+        target_labels = id2label_tensor(label1).cuda()
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
@@ -364,6 +371,10 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             fake_image = self.netG.forward(cond_image, input_mask1, mask_in)
             fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
 
+        normed_fake_image = ((fake_image1 + 1.0)/2 -self.seg_mean)/self.seg_std
+        logits = self.netS(normed_fake_image)[0]
+        pred = torch.max(logits, 1)[1]
+        print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
