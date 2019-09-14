@@ -8,6 +8,7 @@ which is subsequently filled by the generator network.
 import numpy as np
 import torch
 import os
+import torch.nn as nn
 from torch.autograd import Variable
 from util.image_pool import ImagePool
 from .base_model import BaseModel
@@ -21,7 +22,45 @@ NULLVAL = 0.0
 
 # TODO(sh): change the forward_wrapper things to enable multi-gpu training
 # TODO(sh): add additional input of "mask_in" for the binary mask of object region
-# TODO(sh): enlarge the context marign 
+# TODO(sh): enlarge the context marign
+
+class houdini_loss(nn.Module):
+    def __init__(self, use_cuda=True, num_class=19, ignore_index=None):
+        super(houdini_loss, self).__init__()
+        # self.cross_entropy = nn.CrossEntropyLoss(ignore_index=255)
+        self.use_cuda = use_cuda
+        self.num_class = num_class
+        self.ignore_index = ignore_index
+
+    def forward(self, logits, target):
+        pred = logits.max(1)[1].data
+        target = target.data
+        size = list(target.size())
+        if self.ignore_index is not None:
+            pred[pred == self.ignore_index] = self.num_class
+            target[target == self.ignore_index] = self.num_class
+        pred = torch.unsqueeze(pred, dim=1)
+        target = torch.unsqueeze(target, dim=1)
+        size.insert(1, self.num_class+1)
+        pred_onehot = torch.zeros(size)
+        target_onehot = torch.zeros(size)
+        if self.use_cuda:
+            pred_onehot = pred_onehot.cuda()
+            target_onehot = target_onehot.cuda()
+        pred_onehot = pred_onehot.scatter_(1, pred, 1).narrow(1, 0, self.num_class)
+        target_onehot = target_onehot.scatter_(1, target, 1).narrow(1, 0, self.num_class)
+        pred_onehot = Variable(pred_onehot)
+        target_onehot = Variable(target_onehot)
+        neg_log_softmax = -F.log_softmax(logits, dim=1)
+        # print(logits.size())
+        # print(neg_log_softmax.size())
+        # print(target_onehot.size())
+        twod_cross_entropy = torch.sum(neg_log_softmax*target_onehot, dim=1)
+        pred_score = torch.sum(logits*pred_onehot, dim=1)
+        target_score = torch.sum(logits*target_onehot, dim=1)
+        mask = 0.5 + 0.5 * (((pred_score-target_score)/math.sqrt(2)).erf())
+        return torch.mean(mask * twod_cross_entropy)
+
 class Pix2PixHDModel_condImgAdv(BaseModel):
     def __init__(self, opt):
         super(Pix2PixHDModel_condImgAdv, self).__init__(opt)
@@ -112,7 +151,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             # define loss functions
             from .losses import GANLoss, VGGLoss
             self.criterionGAN = GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
-            self.criterionFeat = torch.nn.L1Loss()
+            self.criterionFeat = nn.L1Loss()
             if not opt.no_vgg_loss:             
                 self.criterionVGG = VGGLoss(self.gpu_ids)
         
@@ -147,7 +186,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         self.seg_std = Variable(seg_std.cuda())
         single_model = DRNSeg('drn_d_22', 19, pretrained_model=None, pretrained=False)
         single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
-        self.netS = torch.nn.DataParallel(single_model).cuda()
+        self.netS = nn.DataParallel(single_model).cuda()
 
     def name(self):
         return 'Pix2PixHDModel_condImgAdv'
