@@ -426,7 +426,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         ori_image = (real_image.clone()+ 1.0)/2
         noise = torch.zeros(real_image.size())
         noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
-        mask_logits = torch.unsqueeze(mask_target, 1).repeat(1, 19, 1, 1)
+        mask_logits = mask_target.repeat(1, 19, 1, 1)
         for i in range(20):
             noise_optimizer.zero_grad()
             self.netS.zero_grad()
@@ -442,7 +442,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             hou_loss.backward()
             noise_optimizer.step()
 
-        
+
         # pixel attack ends
 
 
