@@ -414,7 +414,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
 
         normed_fake_image = ((fake_image1 + 1.0)/2 -self.seg_mean)/self.seg_std
-        logits = self.netS(image.cuda())[0]
+        logits = self.netS(real_image)[0]
         # logits = self.netS(normed_fake_image)[0]
         pred = torch.max(logits, 1)[1]
         print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
