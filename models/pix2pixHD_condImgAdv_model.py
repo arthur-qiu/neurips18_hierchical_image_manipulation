@@ -428,15 +428,14 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         noise = torch.zeros(real_image.size()).cuda()
         noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
         mask_logits = mask_target.repeat(1, 19, 1, 1)
-        for i in range(20):
+        for i in range(50):
             noise_optimizer.zero_grad()
             self.netS.zero_grad()
             self.houdini_loss.zero_grad()
 
-            x_hat = torch.clamp(ori_image + noise * mask_in, 0.0, 1.0)
+            x_hat = torch.clamp(ori_image + noise , 0.0, 1.0)
             x_normal = (x_hat - self.seg_mean) / self.seg_std
             logits = self.netS(x_normal)[0]
-            print(logits.shape,target_labels.shape)
             hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
             pred = torch.max(logits, 1)[1]
             print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
