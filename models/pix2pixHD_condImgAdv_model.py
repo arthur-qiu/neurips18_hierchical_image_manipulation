@@ -385,7 +385,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
         # [1, 1, 256, 256] (1, 28)
         predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
-        self.predict_label = predict_label.scatter_(1, predict_map.data.long().cuda(), 1.0)
+        self.predict_label = predict_label.scatter_(1, predict_map.data.long().cuda(), 1.0).cpu().data[0]
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
