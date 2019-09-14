@@ -462,8 +462,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             self.houdini_loss.zero_grad()
 
             # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            # alpha = torch.clamp(alpha, 0.0, 1.0)
-            semantic_image = self.netG.g_out((fake_feature_const * (1-alpha) + fake_feature1_const * alpha), ctx_feats, cond_image, mask_in)
+            alpha_in = torch.clamp(alpha, 0.0, 1.0)
+            semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
             logits = self.netS(x_normal)[0]
