@@ -17,6 +17,7 @@ import util.util as util
 from collections import OrderedDict
 from seg.data_process import id2label_tensor, label2id_tensor
 from seg.segment import DRNSeg
+import math
 
 NULLVAL = 0.0
 
