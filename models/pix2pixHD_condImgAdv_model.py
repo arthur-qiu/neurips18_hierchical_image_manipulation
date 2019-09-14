@@ -376,15 +376,14 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
         normed_fake_image = ((fake_image1 + 1.0)/2 -self.seg_mean)/self.seg_std
         logits = self.netS(normed_fake_image)[0]
+        print(logits.shape)
         pred = torch.max(logits, 1)[1]
         print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
 
-        print(target_labels.shape)
-        print(pred.shape)
-        predict_map = label2id_tensor(pred)
-        print(predict_map.shape)
 
-        size = predict_map.size()
+        predict_map = label2id_tensor(pred)
+
+        size = target_labels.size()
         oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
         # [1, 1, 256, 256] (1, 28)
         predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
