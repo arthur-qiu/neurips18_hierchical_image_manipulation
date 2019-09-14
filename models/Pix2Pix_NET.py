@@ -200,7 +200,7 @@ class GlobalTwoStreamGenerator(nn.Module):
         for i, layer in enumerate(encoder):
             enc_feat = layer(enc_feat)
             if use_skip and ((i < self.n_downsampling*3-1) and (i % 3 == 2)): # super-duper hard-coded
-                enc_feats.append(enc_feat)
+                enc_feats.append(enc_feat.detach())
         return enc_feat, enc_feats
 
     def forward_embedder(self, ctx_feat, obj_feat, mask_feat):
