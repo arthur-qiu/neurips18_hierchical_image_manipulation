@@ -426,6 +426,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         # pixel attack starts
         ori_image = (real_image.clone()+ 1.0)/2
         noise = torch.zeros(real_image.size()).cuda()
+        noise = Variable(noise, requires_grad=True)
         noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
         mask_logits = mask_target.repeat(1, 19, 1, 1)
         for i in range(50):
