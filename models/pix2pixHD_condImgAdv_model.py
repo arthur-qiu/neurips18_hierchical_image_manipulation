@@ -156,6 +156,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         if self.opt.label_nc == 0:
             input_label = label_map.data.cuda()
             input_label1 = label_map1.data.cuda()
+            print(label_map.shape)
         else:
             # create one-hot vector for label map 
             size = label_map.size()
