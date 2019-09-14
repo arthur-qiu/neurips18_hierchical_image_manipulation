@@ -104,3 +104,9 @@ def id2label_tensor(tensor):
     for l in labels:
         out_tensor[tensor == l.id] = l.trainId
     return out_tensor
+
+def label2id_tensor(tensor):
+    out_tensor = torch.zeros_like(tensor)
+    for l in labels:
+        out_tensor[tensor == l.trainId] = l.id
+    return out_tensor

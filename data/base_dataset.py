@@ -19,7 +19,7 @@ class BaseDataset(data.Dataset):
         pass
 
 def get_transform_params(full_size, inst_info=None, class_of_interest=None,
-                         config=None, bbox=None, random_crop=True):
+                         config=None, bbox=None, target_box = None, random_crop=True):
     """Prepares the transform parameters (tight object window, soft object window,
         context window, & image window) for cropping.
     
@@ -56,22 +56,23 @@ def get_transform_params(full_size, inst_info=None, class_of_interest=None,
       print(crop_pos)
     else:
       # use the specified bounding box
-      crop_pos, crop_object, bbox_in_context, bbox_cls, bbox_inst_id = \
+      crop_pos, crop_object, bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id = \
           crop_single_object_with_bbox(bbox, orig_w, orig_h, \
           config['img_to_obj_ratio'], config['patch_to_obj_ratio'], \
-          target_size, random_crop)
+          target_size, target_box, random_crop)
     output_dict = {
         'crop_pos': crop_pos,
         'flip': flip,
         'crop_object_pos': crop_object,
         'bbox_in_context': bbox_in_context,
+        'target_bbox_in_context': target_bbox_in_context,
         'bbox_cls': bbox_cls,
         'bbox_inst_id': bbox_inst_id} 
     return output_dict
 
 
 def crop_single_object_with_bbox(bbox, w, h, img_to_obj_ratio,
-        patch_to_obj_ratio, target_size, random_crop=True):
+        patch_to_obj_ratio, target_size, target_box = None, random_crop=True):
     """ compute cropping region (xmin, ymin, xmax, ymax) for single object """
     # user input bbox
     bbox_cls = bbox['cls']
@@ -86,12 +87,16 @@ def crop_single_object_with_bbox(bbox, w, h, img_to_obj_ratio,
         patch_to_obj_ratio, random_crop)
     if target_size != None:
         bbox_in_context = get_bbox_in_context(bbox, crop_pos, target_size)
+        target_bbox_in_context = get_bbox_in_context(target_box, crop_pos, target_size)
     else:
         bbox_in_context = [bbox['bbox'][0]-crop_pos[0], bbox['bbox'][1]-crop_pos[1],
                            bbox['bbox'][0]-crop_pos[0]+bbox['bbox'][2]-bbox['bbox'][0],
                            bbox['bbox'][1]-crop_pos[1]+bbox['bbox'][3]-bbox['bbox'][1]]
+        target_bbox_in_context = [target_box['bbox'][0]-crop_pos[0], target_box['bbox'][1]-crop_pos[1],
+                           target_box['bbox'][0]-crop_pos[0]+target_box['bbox'][2]-target_box['bbox'][0],
+                           target_box['bbox'][1]-crop_pos[1]+target_box['bbox'][3]-target_box['bbox'][1]]
 
-    return crop_pos, crop_object, bbox_in_context, bbox_cls, bbox_inst_id
+    return crop_pos, crop_object, bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id
 
 def crop_single_object(inst_info, class_of_interest, 
         w, h, prob_bg, img_to_obj_ratio, patch_to_obj_ratio, min_box_size,

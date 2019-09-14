@@ -42,11 +42,13 @@ for i, data in enumerate(dataset):
     generated = model.interp_attack(
         label=Variable(data['label']),
         label1=Variable(data['label1']),
+        label2=Variable(data['label2']),
         inst=Variable(data['inst']),
         inst1=Variable(data['inst1']),
         image=Variable(data['image']),
         mask_in=Variable(data['mask_in']),
-        mask_out=Variable(data['mask_out'])
+        mask_out=Variable(data['mask_out']),
+        mask_target=Variable(data['mask_target'])
     )
 
     visuals = model.get_current_visuals()

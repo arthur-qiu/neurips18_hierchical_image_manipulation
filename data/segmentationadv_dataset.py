@@ -72,11 +72,13 @@ class SegmentationAdvDataset(BaseDataset):
         raw_inputs['label'] = Image.open(A_path)
         raw_inputs['label_path'] = A_path
         raw_inputs['label1'] = Image.open(A_path[:-4]+'1.png')
+        raw_inputs['label2'] = Image.open(A_path[:-4] + '2.png')
 
         inst_path = self.inst_paths[index]
         raw_inputs['inst'] = Image.open(inst_path)
         raw_inputs['inst_path'] = inst_path
         raw_inputs['inst1'] = Image.open(inst_path[:-4]+'1.png')
+        # raw_inputs['inst2'] = Image.open(inst_path[:-4] + '2.png')
         if self.load_image:
             B_path = self.B_paths[index]
             raw_inputs['image'] = Image.open(B_path).convert('RGB')
@@ -89,11 +91,14 @@ class SegmentationAdvDataset(BaseDataset):
         transform_label = get_transform_fn(self.opt, params, method=Image.NEAREST, normalize=False)
         outputs['label'] = transform_label(raw_inputs['label']) * 255.0
         outputs['label1'] = transform_label(raw_inputs['label1']) * 255.0
+        outputs['label2'] = transform_label(raw_inputs['label2']) * 255.0
         outputs['inst'] = transform_label(raw_inputs['inst'])
         outputs['inst1'] = transform_label(raw_inputs['inst1'])
+        # outputs['inst2'] = transform_label(raw_inputs['inst2'])
         if self.opt.dataloader == 'sun_rgbd' or self.opt.dataloader == 'ade20k': # NOTE(sh): dirty exception!
             outputs['inst'] *= 255.0
             outputs['inst1'] *= 255.0
+            # outputs['inst2'] *= 255.0
         outputs['label_path'] = raw_inputs['label_path']
         outputs['inst_path'] = raw_inputs['inst_path']
         # image
@@ -115,6 +120,7 @@ class SegmentationAdvDataset(BaseDataset):
             self.opt, params, method=Image.NEAREST, normalize=False, is_context=False)
         label_obj = transform_obj(raw_inputs['label']) * 255.0
         input_bbox = np.array(params['bbox_in_context'])
+        target_bbox = np.array(params['target_bbox_in_context'])
         bbox_cls = params['bbox_cls']
         bbox_cls = bbox_cls if bbox_cls is not None else self.opt.label_nc-1
         mask_object_inst = (outputs['inst']==params['bbox_inst_id']).float() \
@@ -128,10 +134,14 @@ class SegmentationAdvDataset(BaseDataset):
             outputs['label'], input_bbox, bbox_cls)
         mask_out, mask_object_out, _ = get_masked_image(
             outputs['label'], output_bbox)
+        mask_target, _object_target, _context_target = get_masked_image(
+            outputs['label'], target_bbox)
         # Build dictionary
         outputs['input_bbox'] = torch.from_numpy(input_bbox)
+        outputs['target_bbox'] = torch.from_numpy(target_bbox)
         outputs['output_bbox'] = torch.from_numpy(output_bbox)
         outputs['mask_in'] = mask_in # (1x1xHxW)
+        outputs['mask_target'] = mask_target  # (1x1xHxW)
         outputs['mask_object_in'] = mask_object_in # (1xCxHxW)
         outputs['mask_context_in'] = mask_context_in # (1xCxHxW)
         outputs['mask_out'] = mask_out # (1x1xHxW)
@@ -146,7 +156,7 @@ class SegmentationAdvDataset(BaseDataset):
       #
       full_size = raw_inputs['label'].size
       params = get_transform_params(full_size, inst_info,
-                                    self.class_of_interest, self.config, bbox=inst_info1["object"],
+                                    self.class_of_interest, self.config, bbox=inst_info1["object"], target_box = inst_info1["target"],
                                     random_crop=self.opt.random_crop)
       outputs = self.preprocess_inputs(raw_inputs, params)
       if self.config['preprocess_option'] == 'select_region':

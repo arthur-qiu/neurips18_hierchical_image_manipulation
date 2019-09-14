@@ -14,7 +14,7 @@ from .base_model import BaseModel
 from .layer_util import *
 import util.util as util
 from collections import OrderedDict
-from seg.data_process import id2label_tensor
+from seg.data_process import id2label_tensor, label2id_tensor
 from seg.segment import DRNSeg
 
 NULLVAL = 0.0
@@ -344,9 +344,9 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
         return fake_image
 
-    def interp_attack(self, label, label1, inst, inst1, image, mask_in, mask_out):
+    def interp_attack(self, label, label1, label2, inst, inst1, image, mask_in, mask_out, mask_target):
         # Encode Inputs
-        target_labels = id2label_tensor(label1).long().cuda()
+        target_labels = id2label_tensor(label2).long().cuda()
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
@@ -354,6 +354,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
                                                                                                       mask_in=mask_in,
                                                                                                       infer=True)
         mask_in = mask_in.cuda()
+        mask_target = mask_target.cuda()
 
         # NOTE(sh): modified with additional image input
         input_mask = input_label.clone()
@@ -377,6 +378,14 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         logits = self.netS(normed_fake_image)[0]
         pred = torch.max(logits, 1)[1]
         print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
+
+        predict_map = label2id_tensor(pred)
+
+        size = predict_map.size()
+        oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
+        # [1, 1, 256, 256] (1, 28)
+        predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
+        self.predict_label = predict_label.scatter_(1, predict_map.data.long().cuda(), 1.0)
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
@@ -402,7 +411,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             ('real_image', util.tensor2im(self.real_image)),
             ('synthesized_image', util.tensor2im(self.fake_image)),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
-            ('synthesized_image1', util.tensor2im(self.fake_image1))
+            ('synthesized_image1', util.tensor2im(self.fake_image1)),
+            ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
             ])
 
     def save(self, which_epoch):
