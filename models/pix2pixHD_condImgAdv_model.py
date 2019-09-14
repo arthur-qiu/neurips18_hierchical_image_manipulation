@@ -179,7 +179,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-        #init segnet
+        # init segnet
         seg_mean = torch.FloatTensor([0.29010095242892997, 0.32808144844279574, 0.28696394422942517]).view(1, 3, 1, 1)
         self.seg_mean = Variable(seg_mean.cuda())
         seg_std = torch.FloatTensor([0.1829540508368939, 0.18656561047509476, 0.18447508988480435]).view(1, 3, 1, 1)
@@ -187,6 +187,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         single_model = DRNSeg('drn_d_22', 19, pretrained_model=None, pretrained=False)
         single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
         self.netS = nn.DataParallel(single_model).cuda()
+        # init attack
+        self.houdini_loss = houdini_loss(ignore_index=255)
 
     def name(self):
         return 'Pix2PixHDModel_condImgAdv'
@@ -419,12 +421,41 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         pred = torch.max(logits, 1)[1]
         print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
 
+
+        # pixel attack starts
+        ori_image = (real_image.clone()+ 1.0)/2
+        noise = torch.zeros(real_image.size())
+        noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
+        mask_logits = torch.unsqueeze(mask_target, 1).repeat(1, 19, 1, 1)
+        for i in range(20):
+            noise_optimizer.zero_grad()
+            self.netS.zero_grad()
+            self.houdini_loss.zero_grad()
+
+            x_hat = torch.clamp(ori_image + noise * mask_in, 0.0, 1.0)
+            x_normal = (x_hat - self.seg_mean) / self.seg_std
+            logits = self.netS(x_normal)[0]
+            hou_loss = self.houdini_loss(logits * mask_logits.float(), target_labels * mask_target) * 10
+            pred = torch.max(logits, 1)[1]
+            print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
+            print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
+            hou_loss.backward()
+            noise_optimizer.step()
+
+        
+        # pixel attack ends
+
+
+
+        # semantic attack starts
+
+        # semantic attack ends
+
+
         predict_map = label2id_tensor(pred.unsqueeze(1))
         target_map = label2id_tensor(target_labels)
-
         size = predict_map.size()
         oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
-        # [1, 1, 256, 256] (1, 28)
         predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
         self.predict_label = predict_label.scatter_(1, predict_map.data.long().cuda(), 1.0).cpu().data[0]
         target_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
