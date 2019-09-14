@@ -468,6 +468,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         self.input_label = input_mask.cpu().data[0]
         self.input_label1 = input_mask1.cpu().data[0]
         self.input_image = cond_image.cpu().data[0]
+        self.perturb_image = ((x_hat-0.5)*2).cpu().data[0]
 
         return fake_image
 
@@ -487,6 +488,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             ('synthesized_image', util.tensor2im(self.fake_image)),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
             ('synthesized_image1', util.tensor2im(self.fake_image1)),
+            ('perturb_image', util.tensor2im(self.perturb_image)),
             ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
             ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
             ])
