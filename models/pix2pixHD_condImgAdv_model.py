@@ -451,7 +451,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         # semantic attack starts
         alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
         alpha = Variable(alpha, requires_grad=True)
-        alpha_optimizer = torch.optim.Adam([alpha], lr=1e-1)
+        alpha_optimizer = torch.optim.Adam([alpha], lr=1e-2)
         fake_feature_const = fake_feature.detach().clone()
         fake_feature1_const = fake_feature1.detach().clone()
         # ctx_feats_const = ctx_feats.detach().clone()
@@ -467,8 +467,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
             logits = self.netS(x_normal)[0]
-            hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
-            # hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
+            # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
+            hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
             pred = torch.max(logits, 1)[1]
             print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
             print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
