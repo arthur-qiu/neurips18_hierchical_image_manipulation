@@ -25,7 +25,7 @@ from torchvision import datasets, transforms
 from torch.autograd import Variable
 
 from . import drn
-from .data_transforms import transforms
+from . import data_transforms as transforms
 
 try:
     from modules import batchnormsync
