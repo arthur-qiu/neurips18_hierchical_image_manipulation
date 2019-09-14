@@ -380,12 +380,15 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
 
         predict_map = label2id_tensor(pred.unsqueeze(1))
+        target_map = label2id_tensor(target_labels)
 
         size = predict_map.size()
         oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
         # [1, 1, 256, 256] (1, 28)
         predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
         self.predict_label = predict_label.scatter_(1, predict_map.data.long().cuda(), 1.0).cpu().data[0]
+        target_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
+        self.target_label = target_label.scatter_(1, target_map.data.long().cuda(), 1.0).cpu().data[0]
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
@@ -413,6 +416,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
             ('synthesized_image1', util.tensor2im(self.fake_image1)),
             ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
+            ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
             ])
 
     def save(self, which_epoch):
