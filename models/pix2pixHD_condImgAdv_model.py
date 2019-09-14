@@ -410,7 +410,6 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             fake_image = self.netG.forward(input_concat, mask_in)
             fake_image1 = self.netG.forward(input_label1, mask_in)
         elif self.netG_type == 'global_twostream':
-            mask_in = mask_in.cuda()
             fake_feature, ctx_feats = self.netG.g_in(cond_image, input_mask, mask_in)
             fake_feature1, ctx_feats1 = self.netG.g_in(cond_image, input_mask1, mask_in)
             fake_image = self.netG.forward(cond_image, input_mask1, mask_in)
@@ -423,19 +422,45 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         print('ori_acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
 
 
-        # pixel attack starts
-        ori_image = (real_image.clone()+ 1.0)/2
-        noise = torch.zeros(real_image.size()).cuda()
-        noise = Variable(noise, requires_grad=True)
-        noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
+        # # pixel attack starts
+        # ori_image = (real_image.clone()+ 1.0)/2
+        # noise = torch.zeros(real_image.size()).cuda()
+        # noise = Variable(noise, requires_grad=True)
+        # noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
+        # mask_logits = mask_target.repeat(1, 19, 1, 1)
+        # for i in range(20):
+        #     noise_optimizer.zero_grad()
+        #     self.netS.zero_grad()
+        #     self.houdini_loss.zero_grad()
+        #
+        #     # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
+        #     x_hat = torch.clamp(ori_image + noise * mask_in, 0.0, 1.0)
+        #     x_normal = (x_hat - self.seg_mean) / self.seg_std
+        #     logits = self.netS(x_normal)[0]
+        #     # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
+        #     hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
+        #     pred = torch.max(logits, 1)[1]
+        #     print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
+        #     print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
+        #     hou_loss.backward()
+        #     noise_optimizer.step()
+        # # pixel attack ends
+
+
+
+        # semantic attack starts
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
+        alpha = Variable(alpha, requires_grad=True)
+        alpha_optimizer = torch.optim.Adam([alpha], lr=1e-2)
         mask_logits = mask_target.repeat(1, 19, 1, 1)
         for i in range(20):
-            noise_optimizer.zero_grad()
+            alpha_optimizer.zero_grad()
             self.netS.zero_grad()
             self.houdini_loss.zero_grad()
 
             # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            x_hat = torch.clamp(ori_image + noise * mask_in, 0.0, 1.0)
+            semantic_image = self.netG.g_out((fake_feature * (1-alpha) + fake_feature1 * alpha), ctx_feats, cond_image, mask_in)
+            x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
             logits = self.netS(x_normal)[0]
             # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
@@ -444,15 +469,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
             print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
             hou_loss.backward()
-            noise_optimizer.step()
-
-
-        # pixel attack ends
-
-
-
-        # semantic attack starts
-
+            alpha_optimizer.step()
         # semantic attack ends
 
 
