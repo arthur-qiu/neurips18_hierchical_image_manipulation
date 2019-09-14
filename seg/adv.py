@@ -7,7 +7,7 @@ from torch.autograd import Function
 import math
 from torchvision import transforms
 import logging
-from segment import parse_args, DRNSeg, SegList, SegListSeg, SegListSegAdv
+from .segment import parse_args, DRNSeg, SegList, SegListSeg, SegListSegAdv
 import os.path as osp
 import json
 import numpy as np
