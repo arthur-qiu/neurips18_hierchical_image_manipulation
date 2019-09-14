@@ -159,7 +159,6 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         else:
             # create one-hot vector for label map 
             size = label_map.size()
-            print(label_map.shape)
             oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
             # [1, 1, 256, 256] (1, 28)
             input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_() # [1, 35, 256, 256] (0, 1)
@@ -380,7 +379,10 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         pred = torch.max(logits, 1)[1]
         print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
 
+        print(target_labels.shape)
+        print(pred.shape)
         predict_map = label2id_tensor(pred)
+        print(predict_map.shape)
 
         size = predict_map.size()
         oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
