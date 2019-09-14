@@ -156,10 +156,10 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         if self.opt.label_nc == 0:
             input_label = label_map.data.cuda()
             input_label1 = label_map1.data.cuda()
-            print(label_map.shape)
         else:
             # create one-hot vector for label map 
             size = label_map.size()
+            print(label_map.shape)
             oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
             # [1, 1, 256, 256] (1, 28)
             input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_() # [1, 35, 256, 256] (0, 1)
