@@ -346,7 +346,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
     def interp_attack(self, label, label1, inst, inst1, image, mask_in, mask_out):
         # Encode Inputs
-        target_labels = id2label_tensor(label1).cuda()
+        target_labels = id2label_tensor(label1).long().cuda()
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
