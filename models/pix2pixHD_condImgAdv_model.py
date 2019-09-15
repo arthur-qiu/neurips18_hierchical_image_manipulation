@@ -391,6 +391,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
     def interp_attack(self, label, label1, label2, inst, inst1, image, mask_in, mask_out, mask_target):
         # Encode Inputs
+        original_labels = id2label_tensor(label).long().cuda()
         target_labels = id2label_tensor(label2).long().cuda()
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
@@ -422,7 +423,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         logits = self.netS(real_image)[0]
         # logits = self.netS(normed_fake_image)[0]
         pred = torch.max(logits, 1)[1]
-        print('ori_acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
+        print('ori_acc: %.3f' % ((pred == original_labels).cpu().data.numpy().sum() / (256 * 256)))
 
 
         # # pixel attack starts
