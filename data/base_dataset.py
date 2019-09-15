@@ -260,6 +260,7 @@ def get_transform_fn(opt, params, method=Image.BICUBIC, normalize=True, is_conte
         else:
             crop_pos = params['crop_object_pos']
         transform_list.append(transforms.Lambda(lambda img: __select_region(img, crop_pos, opt.fineSize, method, resize)))
+        print(crop_pos)
     elif opt.resize_or_crop == 'none': # only for testing pix2pixHD
         base = float(2 ** opt.n_downsample_global)
         if opt.netG == 'local':
