@@ -54,6 +54,7 @@ def get_transform_params(full_size, inst_info=None, class_of_interest=None,
           config['patch_to_obj_ratio'], min_box_size, max_box_size,
           target_size, flip, random_crop)
       print(crop_pos)
+      target_bbox_in_context = bbox_in_context
     else:
       # use the specified bounding box
       crop_pos, crop_object, bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id = \
