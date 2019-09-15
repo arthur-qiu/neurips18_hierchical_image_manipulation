@@ -187,8 +187,9 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         self.seg_std = Variable(seg_std.cuda())
         single_model = DRNSeg('drn_d_22', 19, pretrained_model=None, pretrained=False)
         # single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
-        single_model.load_state_dict(torch.load('../drn/checkpoint_100.pth.tar')['state_dict'])
-        self.netS = nn.DataParallel(single_model).cuda()
+        # self.netS = nn.DataParallel(single_model).cuda()
+        self.netS = torch.nn.DataParallel(single_model)
+        self.netS.load_state_dict(torch.load('../drn/checkpoint_100.pth.tar')['state_dict']).cuda()
         # init attack
         self.houdini_loss = houdini_loss(ignore_index=255)
 
