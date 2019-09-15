@@ -24,3 +24,4 @@ python adv_mask2image.py \
 --phase val \
 --how_many 200 \
 --gpu_ids 0 \
+--random_crop 0 \
