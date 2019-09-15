@@ -53,7 +53,8 @@ def get_transform_params(full_size, inst_info=None, class_of_interest=None,
           orig_w, orig_h, config['prob_bg'], config['img_to_obj_ratio'],
           config['patch_to_obj_ratio'], min_box_size, max_box_size,
           target_size, flip, random_crop)
-      print(crop_pos)
+      # print(crop_pos)
+      print(crop_pos[2]-crop_pos[0],crop_pos[3]-crop_pos[1])
       target_bbox_in_context = bbox_in_context
     else:
       # use the specified bounding box
@@ -261,7 +262,6 @@ def get_transform_fn(opt, params, method=Image.BICUBIC, normalize=True, is_conte
         else:
             crop_pos = params['crop_object_pos']
         transform_list.append(transforms.Lambda(lambda img: __select_region(img, crop_pos, opt.fineSize, method, resize)))
-        print(crop_pos)
     elif opt.resize_or_crop == 'none': # only for testing pix2pixHD
         base = float(2 ** opt.n_downsample_global)
         if opt.netG == 'local':
