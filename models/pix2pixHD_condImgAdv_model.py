@@ -452,33 +452,33 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
 
 
-        # # semantic attack starts
-        # alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
-        # alpha = Variable(alpha, requires_grad=True)
-        # alpha_optimizer = torch.optim.Adam([alpha], lr=1e-2)
-        # fake_feature_const = fake_feature.detach().clone()
-        # fake_feature1_const = fake_feature1.detach().clone()
-        # # ctx_feats_const = ctx_feats.detach().clone()
-        # mask_logits = mask_target.repeat(1, 19, 1, 1)
-        # for i in range(20):
-        #     alpha_optimizer.zero_grad()
-        #     self.netS.zero_grad()
-        #     self.houdini_loss.zero_grad()
-        #
-        #     # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-        #     alpha_in = torch.clamp(alpha, 0.0, 1.0)
-        #     semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
-        #     x_hat = (semantic_image + 1.0) / 2
-        #     x_normal = (x_hat - self.seg_mean) / self.seg_std
-        #     logits = self.netS(x_normal)[0]
-        #     # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
-        #     hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
-        #     pred = torch.max(logits, 1)[1]
-        #     print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
-        #     print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
-        #     hou_loss.backward()
-        #     alpha_optimizer.step()
-        # # semantic attack ends
+        # semantic attack starts
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.7
+        alpha = Variable(alpha, requires_grad=True)
+        alpha_optimizer = torch.optim.Adam([alpha], lr=1e-2)
+        fake_feature_const = fake_feature.detach().clone()
+        fake_feature1_const = fake_feature1.detach().clone()
+        # ctx_feats_const = ctx_feats.detach().clone()
+        mask_logits = mask_target.repeat(1, 19, 1, 1)
+        for i in range(20):
+            alpha_optimizer.zero_grad()
+            self.netS.zero_grad()
+            self.houdini_loss.zero_grad()
+
+            # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
+            alpha_in = torch.clamp(alpha, 0.0, 1.0)
+            semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
+            x_hat = (semantic_image + 1.0) / 2
+            x_normal = (x_hat - self.seg_mean) / self.seg_std
+            logits = self.netS(x_normal)[0]
+            # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
+            hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
+            pred = torch.max(logits, 1)[1]
+            print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
+            print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
+            hou_loss.backward()
+            alpha_optimizer.step()
+        # semantic attack ends
 
 
         predict_map = label2id_tensor(pred.unsqueeze(1))
@@ -496,7 +496,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         self.input_label = input_mask.cpu().data[0]
         self.input_label1 = input_mask1.cpu().data[0]
         self.input_image = cond_image.cpu().data[0]
-        #self.perturb_image = ((x_hat-0.5)*2).cpu().data[0]
+        self.perturb_image = ((x_hat-0.5)*2).cpu().data[0]
 
         return fake_image
 
@@ -516,7 +516,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             ('synthesized_image', util.tensor2im(self.fake_image)),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
             ('synthesized_image1', util.tensor2im(self.fake_image1)),
-            #('perturb_image', util.tensor2im(self.perturb_image)),
+            ('perturb_image', util.tensor2im(self.perturb_image)),
             ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
             ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
             ])
