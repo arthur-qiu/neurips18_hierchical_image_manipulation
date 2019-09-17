@@ -189,7 +189,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         # single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
         # self.netS = nn.DataParallel(single_model).cuda()
         self.netS = torch.nn.DataParallel(single_model)
-        self.netS.load_state_dict(torch.load('../drn/checkpoint_200.pth.tar')['state_dict'])
+        self.netS.load_state_dict(torch.load('./pretrain/model_best.pth.tar')['state_dict'])
         self.netS = self.netS.cuda()
         # init attack
         self.houdini_loss = houdini_loss(ignore_index=255)
@@ -422,8 +422,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         normed_fake_image = ((fake_image1 + 1.0)/2 -self.seg_mean)/self.seg_std
         logits = self.netS(real_image)[0]
         # logits = self.netS(normed_fake_image)[0]
-        pred = torch.max(logits, 1)[1]
-        print('ori_acc: %.3f' % ((pred == original_labels).cpu().data.numpy().sum() / (256 * 256)))
+        init_pred = torch.max(logits, 1)[1]
+        print('ori_acc: %.3f' % ((init_pred == original_labels).cpu().data.numpy().sum() / (256 * 256)))
 
 
         # # pixel attack starts
@@ -480,13 +480,15 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             alpha_optimizer.step()
         # semantic attack ends
 
-
+        init_predict_map = label2id_tensor(init_pred.unsqueeze(1))
         predict_map = label2id_tensor(pred.unsqueeze(1))
         target_map = label2id_tensor(target_labels)
         size = predict_map.size()
         oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
         predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
         self.predict_label = predict_label.scatter_(1, predict_map.data.long().cuda(), 1.0).cpu().data[0]
+        init_predict_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
+        self.init_predict_label = init_predict_label.scatter_(1, init_predict_map.data.long().cuda(), 1.0).cpu().data[0]
         target_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
         self.target_label = target_label.scatter_(1, target_map.data.long().cuda(), 1.0).cpu().data[0]
 
@@ -518,6 +520,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             ('synthesized_image1', util.tensor2im(self.fake_image1)),
             ('perturb_image', util.tensor2im(self.perturb_image)),
             ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
+            ('init_predict_label', util.tensor2label(self.init_predict_label, self.opt.label_nc)),
             ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
             ])
 
