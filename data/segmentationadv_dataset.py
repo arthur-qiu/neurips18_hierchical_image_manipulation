@@ -166,10 +166,9 @@ class SegmentationAdvDataset(BaseDataset):
           mask_target2 = torch.where(outputs['inst'] == inst_info1["target"]['inst_ids'][1],torch.full_like(outputs['inst'], 1), torch.full_like(outputs['inst'], 0))
           mask_target = mask_target1 | mask_target2
       outputs['mask_target'] = mask_target.float()
-      print(outputs['mask_target'])
-      for i in range(outputs['mask_target'].shape[0]):
-          for j in range(outputs['mask_target'].shape[1]):
-              if outputs['mask_target'][i,j] == 1.0:
+      for i in range(outputs['mask_target'].shape[1]):
+          for j in range(outputs['mask_target'].shape[2]):
+              if outputs['mask_target'][0,i,j] == 1.0:
                   print(i,j)
       if self.config['preprocess_option'] == 'select_region':
           outputs = self.preprocess_cropping(raw_inputs, outputs, params)
