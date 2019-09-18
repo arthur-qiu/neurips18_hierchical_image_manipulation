@@ -1,27 +1,35 @@
 from PIL import Image
 import numpy as np
-a = Image.open('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/p1/p11/munster_000014_000019_gtFine_instanceIds3.png')
+a = Image.open('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/p2/munster_000123_000019_gtFine_instanceIds3.png')
 b = np.array(a, dtype=np.int32)
-print(b[480,980])
-print(b[480,1180])
+# c = Image.open('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/p2/munster_000123_000019_gtFine_instanceIds.png')
+# d = np.array(c, dtype=np.int32)
+print(b[465,880])
+print(b[473,727])
 
-c = b[:,:1195]
-ys,xs = np.where(b==26004)
+id = 26000
+
+c = b[:,:995]
+ys,xs = np.where(b==id)
 ymin, ymax, xmin, xmax = \
                     ys.min(), ys.max(), xs.min(), xs.max()
 
 print(xmin.item(), ymin.item(), xmax.item(), ymax.item())
 
-ys,xs = np.where(c==26004)
+ys,xs = np.where(c==id)
 for i in range(len(ys)):
-    if b[ys[i],xs[i]] != 26004:
+    if b[ys[i],xs[i]] != id:
         print(ys[i],xs[i])
     b[ys[i], xs[i]] = b[ys[i], xs[i]] + 50
+    # if d[ys[i],xs[i]] != 26001:
+    #     b[ys[i], xs[i]] = b[ys[i], xs[i]] + 50
+    # if xs[i] > 990:
+    #     print(ys[i],xs[i])
 
 d = Image.fromarray(b)
-d.save('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/p1/p11/munster_000014_000019_gtFine_instanceIds1.png')
+d.save('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/p2/munster_000123_000019_gtFine_instanceIds1.png')
 
-ys,xs = np.where(b==26054)
+ys,xs = np.where(b==id+50)
 ymin, ymax, xmin, xmax = \
                     ys.min(), ys.max(), xs.min(), xs.max()
 
