@@ -134,14 +134,14 @@ class SegmentationAdvDataset(BaseDataset):
             outputs['label'], input_bbox, bbox_cls)
         mask_out, mask_object_out, _ = get_masked_image(
             outputs['label'], output_bbox)
-        mask_target, _object_target, _context_target = get_masked_image(
-            outputs['label'], target_bbox)
+        # mask_target, _object_target, _context_target = get_masked_image(
+        #     outputs['label'], target_bbox)
         # Build dictionary
         outputs['input_bbox'] = torch.from_numpy(input_bbox)
         outputs['target_bbox'] = torch.from_numpy(target_bbox)
         outputs['output_bbox'] = torch.from_numpy(output_bbox)
         outputs['mask_in'] = mask_in # (1x1xHxW)
-        outputs['mask_target'] = mask_target  # (1x1xHxW)
+        # outputs['mask_target'] = mask_target  # (1x1xHxW)
         outputs['mask_object_in'] = mask_object_in # (1xCxHxW)
         outputs['mask_context_in'] = mask_context_in # (1xCxHxW)
         outputs['mask_out'] = mask_out # (1x1xHxW)
@@ -159,6 +159,7 @@ class SegmentationAdvDataset(BaseDataset):
                                     self.class_of_interest, self.config, bbox=inst_info1["object"], target_box = inst_info1["target"],
                                     random_crop=self.opt.random_crop)
       outputs = self.preprocess_inputs(raw_inputs, params)
+      outputs['mask_target'] = np.where(outputs['inst'] == inst_info1["target"]['inst_id'],1,0)
       if self.config['preprocess_option'] == 'select_region':
           outputs = self.preprocess_cropping(raw_inputs, outputs, params)
       return outputs
