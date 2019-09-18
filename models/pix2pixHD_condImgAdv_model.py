@@ -462,7 +462,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
         # ctx_feats_const = ctx_feats.detach().clone()
         mask_logits = mask_target.repeat(1, 19, 1, 1)
-        for i in range(20):
+        for i in range(30):
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
             self.houdini_loss.zero_grad()
