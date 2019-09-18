@@ -1,12 +1,12 @@
 from PIL import Image
 import numpy as np
-a = Image.open('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/pick1/pair11/munster_000090_000019_gtFine_instanceIds3.png')
+a = Image.open('/Users/qiuhaonan/Downloads/gtFine_trainvaltest/pick3/munster_000014_000019_gtFine_instanceIds1.png')
 b = np.array(a, dtype=np.int32)
-print(b[481,886])
+print(b[450,1090])
 print(b[465,742])
 
 c = b[:,928:]
-ys,xs = np.where(b==26000)
+ys,xs = np.where(b==27000)
 ymin, ymax, xmin, xmax = \
                     ys.min(), ys.max(), xs.min(), xs.max()
 
