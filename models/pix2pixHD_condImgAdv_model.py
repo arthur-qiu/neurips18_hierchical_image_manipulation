@@ -190,6 +190,8 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         # self.netS = nn.DataParallel(single_model).cuda()
         self.netS = torch.nn.DataParallel(single_model)
         self.netS.load_state_dict(torch.load('./pretrain/model_best.pth.tar')['state_dict'])
+        self.netS.load_state_dict(torch.load('../drn/checkpoint_075.pth.tar')['state_dict'])
+
         self.netS = self.netS.cuda()
         # init attack
         self.houdini_loss = houdini_loss(ignore_index=255)
@@ -460,7 +462,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
         # ctx_feats_const = ctx_feats.detach().clone()
         mask_logits = mask_target.repeat(1, 19, 1, 1)
-        for i in range(20):
+        for i in range(30):
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
             self.houdini_loss.zero_grad()
