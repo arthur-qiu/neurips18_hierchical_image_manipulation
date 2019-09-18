@@ -159,7 +159,7 @@ class SegmentationAdvDataset(BaseDataset):
                                     self.class_of_interest, self.config, bbox=inst_info1["object"], target_box = inst_info1["target"],
                                     random_crop=self.opt.random_crop)
       outputs = self.preprocess_inputs(raw_inputs, params)
-      mask_target = np.where(outputs['inst'] == inst_info1["target"]['inst_id'],1,0)
+      mask_target = torch.where(outputs['inst'] == inst_info1["target"]['inst_id'],torch.full_like(outputs['inst'], 1),torch.full_like(outputs['inst'], 0))
       outputs['mask_target'] = mask_target.float()
       if self.config['preprocess_option'] == 'select_region':
           outputs = self.preprocess_cropping(raw_inputs, outputs, params)
