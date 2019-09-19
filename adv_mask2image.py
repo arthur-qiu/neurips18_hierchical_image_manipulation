@@ -56,5 +56,6 @@ for i, data in enumerate(dataset):
 
     print('process image... %s' % ('%05d'% i))
     visualizer.save_images(webpage, visuals, ['%05d' % i])
+    visualizer.save_images(webpage, visuals1, ['%05d' % i])
 
 webpage.save()
