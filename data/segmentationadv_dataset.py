@@ -159,7 +159,7 @@ class SegmentationAdvDataset(BaseDataset):
                                     self.class_of_interest, self.config, bbox=inst_info1["object"], target_box = inst_info1["target"],
                                     random_crop=self.opt.random_crop)
       outputs = self.preprocess_inputs(raw_inputs, params)
-      if inst_info1["target"]['inst_ids'] is None:
+      if inst_info1["target"].get('inst_ids') is None:
           mask_target = torch.where(outputs['inst'] == inst_info1["target"]['inst_id'],torch.full_like(outputs['inst'], 1),torch.full_like(outputs['inst'], 0))
       else:
           mask_target1 = torch.where(outputs['inst'] == inst_info1["target"]['inst_ids'][0],torch.full_like(outputs['inst'], 1),torch.full_like(outputs['inst'], 0))
