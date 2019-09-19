@@ -457,7 +457,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         # semantic attack starts
         alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
         alpha = Variable(alpha, requires_grad=True)
-        alpha_optimizer = torch.optim.Adam([alpha], lr=0.005)
+        alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
         fake_feature_const = fake_feature.detach().clone()
         fake_feature1_const = fake_feature1.detach().clone()
         # ctx_feats_const = ctx_feats.detach().clone()
