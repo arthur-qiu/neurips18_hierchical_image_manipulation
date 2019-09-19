@@ -455,9 +455,9 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
 
         # semantic attack starts
-        alpha = torch.zeros(fake_feature.size()).cuda() + 0.85
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
         alpha = Variable(alpha, requires_grad=True)
-        alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
+        alpha_optimizer = torch.optim.Adam([alpha], lr=0.005)
         fake_feature_const = fake_feature.detach().clone()
         fake_feature1_const = fake_feature1.detach().clone()
         # ctx_feats_const = ctx_feats.detach().clone()
@@ -468,7 +468,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             self.houdini_loss.zero_grad()
 
             # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            alpha_in = torch.clamp(alpha, 0.7, 1.0)
+            alpha_in = torch.clamp(alpha, 0.6, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
