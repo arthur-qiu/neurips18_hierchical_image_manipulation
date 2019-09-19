@@ -455,7 +455,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
 
         # semantic attack starts
-        alpha = torch.zeros(fake_feature.size()).cuda() + 0.5
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
         alpha = Variable(alpha, requires_grad=True)
         alpha_optimizer = torch.optim.Adam([alpha], lr=1e-2)
         fake_feature_const = fake_feature.detach().clone()
@@ -468,7 +468,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             self.houdini_loss.zero_grad()
 
             # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            alpha_in = torch.clamp(alpha, 0.0, 1.0)
+            alpha_in = torch.clamp(alpha, 0.6, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
@@ -476,6 +476,14 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
             hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
             pred = torch.max(logits, 1)[1]
+
+            if i ==0:
+                ori_predict_map = label2id_tensor(pred.unsqueeze(1))
+                ori_size = ori_predict_map.size()
+                ori_oneHot_size = (ori_size[0], self.opt.label_nc, ori_size[2], ori_size[3])
+                ori_predict_label = torch.cuda.FloatTensor(torch.Size(ori_oneHot_size)).zero_()
+                self.ori_predict_label = ori_predict_label.scatter_(1, ori_predict_map.data.long().cuda(), 1.0).cpu().data[0]
+
             print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
             print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
             hou_loss.backward()
@@ -514,15 +522,20 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
     def get_current_visuals(self):
         return OrderedDict([
-            ('input_label', util.tensor2label(self.input_label, self.opt.label_nc)),
             ('input_image', util.tensor2im(self.input_image)),
             ('real_image', util.tensor2im(self.real_image)),
             ('synthesized_image', util.tensor2im(self.fake_image)),
-            ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
-            ('synthesized_image1', util.tensor2im(self.fake_image1)),
             ('perturb_image', util.tensor2im(self.perturb_image)),
-            ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
+            ('synthesized_image1', util.tensor2im(self.fake_image1)),
+            ])
+
+    def get_current_visuals1(self):
+        return OrderedDict([
+            ('input_label', util.tensor2label(self.input_label, self.opt.label_nc)),
             ('init_predict_label', util.tensor2label(self.init_predict_label, self.opt.label_nc)),
+            ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
+            ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
+            ('ori_predict_label', util.tensor2label(self.ori_predict_label, self.opt.label_nc)),
             ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
             ])
 

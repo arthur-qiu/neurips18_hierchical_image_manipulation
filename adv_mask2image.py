@@ -52,6 +52,7 @@ for i, data in enumerate(dataset):
     )
 
     visuals = model.get_current_visuals()
+    visuals1 = model.get_current_visuals1()
 
     print('process image... %s' % ('%05d'% i))
     visualizer.save_images(webpage, visuals, ['%05d' % i])
