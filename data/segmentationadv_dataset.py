@@ -145,7 +145,7 @@ class SegmentationAdvDataset(BaseDataset):
         outputs['mask_object_in'] = mask_object_in # (1xCxHxW)
         outputs['mask_context_in'] = mask_context_in # (1xCxHxW)
         outputs['mask_out'] = mask_out # (1x1xHxW)
-        outputs['mask_object_out'] = mask_object_out # (1xCxHxW)mask_in
+        outputs['mask_object_out'] = mask_object_out # (1xCxHxW)
         outputs['label_obj'] = label_obj
         outputs['mask_object_inst'] = mask_object_inst
         outputs['cls'] = torch.LongTensor([bbox_cls])
