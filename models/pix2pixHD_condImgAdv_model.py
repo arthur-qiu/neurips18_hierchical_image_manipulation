@@ -577,7 +577,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
 
         # semantic attack starts
-        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.5
         alpha = Variable(alpha, requires_grad=True)
         alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
         fake_feature_const = fake_feature.detach().clone()
@@ -590,7 +590,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             self.houdini_loss.zero_grad()
 
             # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            alpha_in = torch.clamp(alpha, 0.6, 1.0)
+            alpha_in = torch.clamp(alpha, 0.0, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
@@ -606,10 +606,14 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
                 ori_predict_label = torch.cuda.FloatTensor(torch.Size(ori_oneHot_size)).zero_()
                 self.ori_predict_label = ori_predict_label.scatter_(1, ori_predict_map.data.long().cuda(), 1.0).cpu().data[0]
 
-            print('acc: %.3f' % (((pred * mask_target.squeeze(1).long() == target_labels * mask_target.squeeze(1).long()).cpu().data.numpy().sum() - 256 * 256 + mask_target.squeeze(1).cpu().data.numpy().sum()) / mask_target.squeeze(1).cpu().data.numpy().sum()))
-            print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
             hou_loss.backward()
             alpha_optimizer.step()
+
+        print('acc: %.3f' % (((pred * mask_target.squeeze(1).long() == target_labels * mask_target.squeeze(
+            1).long()).cpu().data.numpy().sum() - 256 * 256 + mask_target.squeeze(
+            1).cpu().data.numpy().sum()) / mask_target.squeeze(1).cpu().data.numpy().sum()))
+        print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
+
         # semantic attack ends
 
         init_predict_map = label2id_tensor(init_pred.unsqueeze(1))
