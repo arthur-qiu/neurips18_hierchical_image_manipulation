@@ -518,6 +518,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         target_labels_old = id2label_tensor(label2).long().cuda()
         print(torch.unique(target_labels_old))
         target_labels = torch.zeros_like(target_labels_old) + id
+        print(torch.unique(target_labels))
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
