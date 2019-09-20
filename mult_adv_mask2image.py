@@ -39,23 +39,26 @@ for i, data in enumerate(dataset):
     #         mask_out=Variable(data['mask_out'])
     #         )
 
-    generated = model.mult_interp_attack(
-        label=Variable(data['label']),
-        label1=Variable(data['label1']),
-        label2=Variable(data['label2']),
-        inst=Variable(data['inst']),
-        inst1=Variable(data['inst1']),
-        image=Variable(data['image']),
-        mask_in=Variable(data['mask_in']),
-        mask_out=Variable(data['mask_out']),
-        mask_target=Variable(data['mask_target'])
-    )
+    for j in range(19):
 
-    visuals = model.get_current_visuals()
-    visuals1 = model.get_current_visuals1()
+        generated = model.mult_interp_attack(
+            label=Variable(data['label']),
+            label1=Variable(data['label1']),
+            label2=Variable(data['label2']),
+            inst=Variable(data['inst']),
+            inst1=Variable(data['inst1']),
+            image=Variable(data['image']),
+            mask_in=Variable(data['mask_in']),
+            mask_out=Variable(data['mask_out']),
+            mask_target=Variable(data['mask_target']),
+            id=j,
+        )
 
-    print('process image... %s' % ('%05d'% i))
-    visualizer.save_images(webpage, visuals, ['%05d' % i])
-    visualizer.save_images(webpage, visuals1, ['%05d' % i])
+        visuals = model.get_current_visuals()
+        visuals1 = model.get_current_visuals1()
+
+        print('process image... %s' % ('%05d'% i))
+        visualizer.save_images(webpage, visuals, ['%05d' % i])
+        visualizer.save_images(webpage, visuals1, ['%05d' % i])
 
 webpage.save()

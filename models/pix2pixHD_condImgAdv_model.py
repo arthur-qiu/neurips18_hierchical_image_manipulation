@@ -395,7 +395,6 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         # Encode Inputs
         original_labels = id2label_tensor(label).long().cuda()
         target_labels = id2label_tensor(label2).long().cuda()
-        print(torch.unique(target_labels))
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
@@ -513,10 +512,11 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
         return fake_image
 
-    def mult_interp_attack(self, label, label1, label2, inst, inst1, image, mask_in, mask_out, mask_target):
+    def mult_interp_attack(self, label, label1, label2, inst, inst1, image, mask_in, mask_out, mask_target, id):
         # Encode Inputs
         original_labels = id2label_tensor(label).long().cuda()
-        target_labels = id2label_tensor(label2).long().cuda()
+        target_labels_old = id2label_tensor(label2).long().cuda()
+        target_labels = torch.zeros_like(target_labels_old) + id
 
         input_label, input_label1, inst_map, inst_map1, real_image, _, cond_image = self.encode_input(label, label1,
                                                                                                       inst, inst1,
