@@ -547,7 +547,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         logits = self.netS(real_image)[0]
         # logits = self.netS(normed_fake_image)[0]
         init_pred = torch.max(logits, 1)[1]
-        print('ori_acc: %.3f' % ((init_pred == original_labels).cpu().data.numpy().sum() / (256 * 256)))
+        # print('ori_acc: %.3f' % ((init_pred == original_labels).cpu().data.numpy().sum() / (256 * 256)))
 
 
         # # pixel attack starts
@@ -577,7 +577,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
 
 
         # semantic attack starts
-        alpha = torch.zeros(fake_feature.size()).cuda() + 0.5
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
         alpha = Variable(alpha, requires_grad=True)
         alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
         fake_feature_const = fake_feature.detach().clone()
@@ -590,7 +590,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
             self.houdini_loss.zero_grad()
 
             # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            alpha_in = torch.clamp(alpha, 0.0, 1.0)
+            alpha_in = torch.clamp(alpha, 0.6, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             x_normal = (x_hat - self.seg_mean) / self.seg_std
@@ -612,7 +612,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         print('acc: %.3f' % (((pred * mask_target.squeeze(1).long() == target_labels * mask_target.squeeze(
             1).long()).cpu().data.numpy().sum() - 256 * 256 + mask_target.squeeze(
             1).cpu().data.numpy().sum()) / mask_target.squeeze(1).cpu().data.numpy().sum()))
-        print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
+        # print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
 
         # semantic attack ends
 
