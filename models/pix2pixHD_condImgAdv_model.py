@@ -606,7 +606,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
                 ori_predict_label = torch.cuda.FloatTensor(torch.Size(ori_oneHot_size)).zero_()
                 self.ori_predict_label = ori_predict_label.scatter_(1, ori_predict_map.data.long().cuda(), 1.0).cpu().data[0]
 
-            print('acc: %.3f' % ((pred * mask_target.squeeze(1).long() == target_labels * mask_target.squeeze(1).long()).cpu().data.numpy().sum() / torch.sum(mask_target.squeeze(1).long())))
+            print('acc: %.3f' % ((pred * mask_target.squeeze(1).long() == target_labels * mask_target.squeeze(1).long() - 256 * 256 + torch.sum(mask_target.squeeze(1).long())).cpu().data.numpy().sum() / torch.sum(mask_target.squeeze(1).long())))
             print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
             hou_loss.backward()
             alpha_optimizer.step()
