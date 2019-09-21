@@ -13,6 +13,9 @@ def CreateDataset(opt):
     elif opt.dataloader == 'cityscape_adv':
         from data.cityscapeadv_dataset import CityscapeAdvDataset
         dataset = CityscapeAdvDataset()
+    elif opt.dataloader == 'cityscape_double_adv':
+        from data.cityscapedoubleadv_dataset import CityscapeDoubleAdvDataset
+        dataset = CityscapeDoubleAdvDataset()
 
     print("dataset [%s] was created" % (dataset.name()))
     dataset.initialize(opt)

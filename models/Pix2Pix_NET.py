@@ -269,6 +269,17 @@ class GlobalTwoStreamGenerator(nn.Module):
 
         return output
 
+    def g_double_out(self, embed_feat, embed_feat2, ctx_feats, img, mask, mask2):
+        output = self.forward_decoder(self.decoder, self.outputEmbedder, embed_feat, ctx_feats)
+        output2 = self.forward_decoder(self.decoder, self.outputEmbedder, embed_feat2, ctx_feats)
+        if self.use_output_gate:
+            mask_output = mask.repeat(1, self.output_nc, 1, 1)
+            mask_output2 = mask2.repeat(1, self.output_nc, 1, 1)
+            # output = (1-mask_output)*img + mask_output*output
+            output = (1 - mask_output|mask_output2) * img[:, :3, :, :] + mask_output * output + mask_output2 * output2
+
+        return output
+
 class Encoder(nn.Module):
     def __init__(self, input_nc, output_nc, ngf=32, n_downsampling=4, norm_layer='instance'):
         super(Encoder, self).__init__()

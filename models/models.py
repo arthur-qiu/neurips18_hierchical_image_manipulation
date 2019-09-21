@@ -13,6 +13,9 @@ def create_model(opt, data_size=None):
     elif opt.model == 'pix2pixHD_condImgAdv':
       from .pix2pixHD_condImgAdv_model import Pix2PixHDModel_condImgAdv
       model = Pix2PixHDModel_condImgAdv(opt)
+    elif opt.model == 'pix2pixHD_condImgDoubleAdv':
+      from .pix2pixHD_condImgDoubleAdv_model import Pix2PixHDModel_condImgDoubleAdv
+      model = Pix2PixHDModel_condImgDoubleAdv(opt)
     elif opt.model == 'pix2pixHD_condImgColor':
       from .pix2pixHD_condImgColor_model import Pix2PixHDModel_condImgColor
       model = Pix2PixHDModel_condImgColor(opt)
