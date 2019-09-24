@@ -276,7 +276,8 @@ class GlobalTwoStreamGenerator(nn.Module):
             mask_output = mask.repeat(1, self.output_nc, 1, 1)
             mask_output2 = mask2.repeat(1, self.output_nc, 1, 1)
             # output = (1-mask_output)*img + mask_output*output
-            output = (1 - mask_output|mask_output2) * img[:, :3, :, :] + mask_output * output + mask_output2 * output2
+            print(torch.max(mask_output + mask_output2))
+            output = (1 - mask_output - mask_output2) * img[:, :3, :, :] + mask_output * output + mask_output2 * output2
 
         return output
 
