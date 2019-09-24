@@ -8,12 +8,12 @@ import random
 import torch
 
 
-class BaseDoubleDataset(data.Dataset):
+class BaseDataset(data.Dataset):
     def __init__(self):
-        super(BaseDoubleDataset, self).__init__()
+        super(BaseDataset, self).__init__()
 
     def name(self):
-        return 'BaseDoubleDataset'
+        return 'BaseDataset'
 
     def initialize(self, opt):
         pass
