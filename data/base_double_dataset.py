@@ -60,7 +60,7 @@ def get_transform_params(full_size, inst_info=None, class_of_interest=None,
         sub_bbox_in_context = bbox_in_context
     else:
         # use the specified bounding box
-        crop_pos, crop_object, bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id = \
+        crop_pos, crop_object, bbox_in_context, sub_bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id = \
             crop_single_object_with_bbox(bbox, orig_w, orig_h, \
                                          config['img_to_obj_ratio'], config['patch_to_obj_ratio'], \
                                          target_size, sub_bbox, target_box, random_crop)
@@ -92,13 +92,13 @@ def crop_single_object_with_bbox(bbox, w, h, img_to_obj_ratio,
                                        patch_to_obj_ratio, random_crop)
     if target_size != None:
         bbox_in_context = get_bbox_in_context(bbox, crop_pos, target_size)
-        double_bbox_in_context = get_bbox_in_context(sub_bbox, crop_pos, target_size)
+        sub_bbox_in_context = get_bbox_in_context(sub_bbox, crop_pos, target_size)
         target_bbox_in_context = get_bbox_in_context(target_box, crop_pos, target_size)
     else:
         bbox_in_context = [bbox['bbox'][0] - crop_pos[0], bbox['bbox'][1] - crop_pos[1],
                            bbox['bbox'][0] - crop_pos[0] + bbox['bbox'][2] - bbox['bbox'][0],
                            bbox['bbox'][1] - crop_pos[1] + bbox['bbox'][3] - bbox['bbox'][1]]
-        double_bbox_in_context = [sub_bbox['bbox'][0] - crop_pos[0], sub_bbox['bbox'][1] - crop_pos[1],
+        sub_bbox_in_context = [sub_bbox['bbox'][0] - crop_pos[0], sub_bbox['bbox'][1] - crop_pos[1],
                                   sub_bbox['bbox'][0] - crop_pos[0] + sub_bbox['bbox'][2] - sub_bbox['bbox'][
                                       0],
                                   sub_bbox['bbox'][1] - crop_pos[1] + sub_bbox['bbox'][3] - sub_bbox['bbox'][
@@ -107,7 +107,7 @@ def crop_single_object_with_bbox(bbox, w, h, img_to_obj_ratio,
                                   target_box['bbox'][0] - crop_pos[0] + target_box['bbox'][2] - target_box['bbox'][0],
                                   target_box['bbox'][1] - crop_pos[1] + target_box['bbox'][3] - target_box['bbox'][1]]
 
-    return crop_pos, crop_object, bbox_in_context, double_bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id
+    return crop_pos, crop_object, bbox_in_context, sub_bbox_in_context, target_bbox_in_context, bbox_cls, bbox_inst_id
 
 
 def crop_single_object(inst_info, class_of_interest,
