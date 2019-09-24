@@ -523,6 +523,7 @@ class Pix2PixHDModel_condImgDoubleAdv(BaseModel):
         self.real_image = real_image.cpu().data[0]
         self.input_label = input_mask.cpu().data[0]
         self.input_label1 = input_mask1.cpu().data[0]
+        self.input_label2 = input_mask2.cpu().data[0]
         self.input_image = cond_image.cpu().data[0]
         self.perturb_image = ((x_hat-0.5)*2).cpu().data[0]
 
@@ -551,6 +552,7 @@ class Pix2PixHDModel_condImgDoubleAdv(BaseModel):
             ('input_label', util.tensor2label(self.input_label, self.opt.label_nc)),
             ('init_predict_label', util.tensor2label(self.init_predict_label, self.opt.label_nc)),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
+            ('input_label2', util.tensor2label(self.input_label2, self.opt.label_nc)),
             ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
             ('ori_predict_label', util.tensor2label(self.ori_predict_label, self.opt.label_nc)),
             ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
