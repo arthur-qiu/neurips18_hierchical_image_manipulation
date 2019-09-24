@@ -1,7 +1,7 @@
 ### Copyright (C) 2017 NVIDIA Corporation. All rights reserved.
 ### Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 import os.path
-from data.base_dataset import BaseDataset, get_transform_params, get_transform_fn, normalize, get_masked_image, get_soft_bbox
+from data.base_double_dataset import BaseDataset, get_transform_params, get_transform_fn, normalize, get_masked_image, get_soft_bbox
 from data.base_dataset import get_raw_transform_fn
 from data.image_folder import make_dataset
 from PIL import Image
@@ -123,6 +123,7 @@ class SegmentationDoubleAdvDataset(BaseDataset):
         label_obj = transform_obj(raw_inputs['label']) * 255.0
         input_bbox = np.array(params['bbox_in_context'])
         target_bbox = np.array(params['target_bbox_in_context'])
+        sub_bbox = np.array(params['sub_bbox_in_context'])
         bbox_cls = params['bbox_cls']
         bbox_cls = bbox_cls if bbox_cls is not None else self.opt.label_nc-1
         mask_object_inst = (outputs['inst']==params['bbox_inst_id']).float() \
@@ -136,11 +137,14 @@ class SegmentationDoubleAdvDataset(BaseDataset):
             outputs['label'], input_bbox, bbox_cls)
         mask_out, mask_object_out, _ = get_masked_image(
             outputs['label'], output_bbox)
+        mask_in2, _make_object1, _mask_context1 = get_masked_image(outputs['label'], sub_bbox)
         # Build dictionary
         outputs['input_bbox'] = torch.from_numpy(input_bbox)
         outputs['target_bbox'] = torch.from_numpy(target_bbox)
+        outputs['sub_bbox'] = torch.from_numpy(sub_bbox)
         outputs['output_bbox'] = torch.from_numpy(output_bbox)
         outputs['mask_in'] = mask_in # (1x1xHxW)
+        outputs['mask_in2'] = mask_in2  # (1x1xHxW)
         # mask_target, _object_target, _context_target = get_masked_image(
         #     outputs['label'], target_bbox)
         # outputs['mask_target'] = mask_target  # (1x1xHxW)
@@ -158,7 +162,7 @@ class SegmentationDoubleAdvDataset(BaseDataset):
       #
       full_size = raw_inputs['label'].size
       params = get_transform_params(full_size, inst_info,
-                                    self.class_of_interest, self.config, bbox=inst_info1["object"], target_box = inst_info1["target"],
+                                    self.class_of_interest, self.config, bbox=inst_info1["object"], sub_bbox=inst_info1["object_sub"],target_box = inst_info1["target"],
                                     random_crop=self.opt.random_crop)
       outputs = self.preprocess_inputs(raw_inputs, params)
       if inst_info1["target"].get('inst_ids') is None:
@@ -168,10 +172,10 @@ class SegmentationDoubleAdvDataset(BaseDataset):
           mask_target2 = torch.where(outputs['inst'] == inst_info1["target"]['inst_ids'][1],torch.full_like(outputs['inst'], 1), torch.full_like(outputs['inst'], 0))
           mask_target = mask_target1 | mask_target2
       outputs['mask_target'] = mask_target.float()
-      mask_in2, _make_object1, _mask_context1 = get_masked_image(outputs['label'], inst_info1["object_sub"])
-      print(inst_info1["object_sub"])
-      outputs['mask_in2'] = mask_in2
-      print(torch.max(mask_in2))
+      # mask_in2, _make_object1, _mask_context1 = get_masked_image(outputs['label'], inst_info1["object_sub"])
+      # print(inst_info1["object_sub"])
+      # outputs['mask_in2'] = mask_in2
+      # print(torch.max(mask_in2))
       # for i in range(outputs['mask_target'].shape[1]):
       #     for j in range(outputs['mask_target'].shape[2]):
       #         if outputs['mask_target'][0,i,j] == 1.0:
