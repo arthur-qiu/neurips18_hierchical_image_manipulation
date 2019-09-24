@@ -169,6 +169,7 @@ class SegmentationDoubleAdvDataset(BaseDataset):
           mask_target = mask_target1 | mask_target2
       outputs['mask_target'] = mask_target.float()
       mask_in2, _make_object1, _mask_context1 = get_masked_image(outputs['label'], inst_info1["object_sub"])
+      print(inst_info1["object_sub"])
       outputs['mask_in2'] = mask_in2
       print(torch.max(mask_in2))
       # for i in range(outputs['mask_target'].shape[1]):
