@@ -525,6 +525,7 @@ class Pix2PixHDModel_condImgDoubleAdv(BaseModel):
         self.input_label1 = input_mask1.cpu().data[0]
         self.input_label2 = input_mask2.cpu().data[0]
         self.input_image = cond_image.cpu().data[0]
+        self.input_image2 = cond_image2.cpu().data[0]
         self.perturb_image = ((x_hat-0.5)*2).cpu().data[0]
 
         return fake_image
@@ -541,6 +542,7 @@ class Pix2PixHDModel_condImgDoubleAdv(BaseModel):
     def get_current_visuals(self):
         return OrderedDict([
             ('input_image', util.tensor2im(self.input_image)),
+            ('input_image2', util.tensor2im(self.input_image2)),
             ('real_image', util.tensor2im(self.real_image)),
             ('synthesized_image', util.tensor2im(self.fake_image)),
             ('perturb_image', util.tensor2im(self.perturb_image)),
