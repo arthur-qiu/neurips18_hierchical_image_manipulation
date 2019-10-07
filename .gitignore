@@ -1,6 +1,7 @@
 # Folders
 datasets/
 checkpoints/
+pretrain/
 results/
 scripts/.*
 .idea/*
