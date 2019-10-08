@@ -191,7 +191,7 @@ class Pix2PixHDModel_condImgAdv(BaseModel):
         self.netS = torch.nn.DataParallel(single_model)
         # self.netS.load_state_dict(torch.load('./pretrain/model_best.pth.tar')['state_dict'])
         # self.netS.load_state_dict(torch.load('./pretrain//checkpoint_200.pth.tar')['state_dict'])
-        self.netS.load_state_dict(torch.load('../drn/checkpoint_050.pth.tar')['state_dict'])
+        self.netS.load_state_dict(torch.load('../drn/checkpoint_080.pth.tar')['state_dict'])
 
         self.netS = self.netS.cuda()
         # init attack
