@@ -476,23 +476,27 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             x_hat, _ = pad_to_square(x_hat, 0)
-            x_hat.requires_grad = True
             out = self.netS(x_hat)[0]
             cfs = nn.functional.sigmoid(out[:, 4]).cuda()
-            mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
-            num_pred = torch.numel(cfs)
-            removed = torch.sum((cfs < conf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
 
-            total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
-            acc = removed / float(num_pred)
-            acc_list.append(acc)
-
+            total_loss = torch.sum(cfs)
             total_loss.backward()
             alpha_optimizer.step()
 
-            print('acc: %.3f' % (acc))
-            print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
-
+            # mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
+            # num_pred = torch.numel(cfs)
+            # removed = torch.sum((cfs < conf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
+            #
+            # total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
+            # acc = removed / float(num_pred)
+            # acc_list.append(acc)
+            #
+            # total_loss.backward()
+            # alpha_optimizer.step()
+            #
+            # print('acc: %.3f' % (acc))
+            # print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
+            #
 
 
 
