@@ -478,10 +478,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
 
-            # total_loss = torch.sum(out)
-            # total_loss.backward()
-            # alpha_optimizer.step()
-            
             cfs = nn.functional.sigmoid(out[:, 4]).cuda()
 
             mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
@@ -498,18 +494,26 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             print('acc: %.3f' % (acc))
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
 
-
-
+        detections = self.netS(x_hat)
+        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
+        predict_label = util.tensor2im(semantic_image.cpu().data[0])
+        predict_img = Image.fromarray(predict_label)
+        predict_draw = ImageDraw.Draw(predict_img)
+        for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+            temp_color = int(cls_pred) * 30 % 255
+            predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
+            predict_draw.text((x1, y1 - 12), self.classes[int(cls_pred)], fill=temp_color)
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
         self.real_image = real_image.cpu().data[0]
         self.input_image = cond_image.cpu().data[0]
+        self.perturb_image = ((x_hat - 0.5) * 2).cpu().data[0]
 
-        # self.perturb_image = ((x_hat - 0.5) * 2).cpu().data[0]
         self.input_label = input_mask.cpu().data[0]
         self.init_predict_label = np.array(init_predict_img)
         self.input_label1 = input_mask1.cpu().data[0]
+        self.predict_label = np.array(predict_img)
         self.ori_predict_label = np.array(ori_predict_img)
 
 
@@ -647,7 +651,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             ('input_image', util.tensor2im(self.input_image)),
             ('real_image', util.tensor2im(self.real_image)),
             ('synthesized_image', util.tensor2im(self.fake_image)),
-            # ('perturb_image', util.tensor2im(self.perturb_image)),
+            ('perturb_image', util.tensor2im(self.perturb_image)),
             ('synthesized_image1', util.tensor2im(self.fake_image1)),
             ])
 
@@ -656,7 +660,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             ('input_label', util.tensor2label(self.input_label, self.opt.label_nc)),
             ('init_predict_label', self.init_predict_label),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
-            # ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
+            ('predict_label', self.predict_label),
             ('ori_predict_label', self.ori_predict_label),
             ])
 
