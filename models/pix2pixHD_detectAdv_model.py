@@ -28,7 +28,7 @@ NULLVAL = 0.0
 # TODO(sh): enlarge the context marign
 
 def pad_to_square(img, pad_value):
-    c, h, w = img.shape
+    batch, c, h, w = img.shape
     dim_diff = np.abs(h - w)
     # (upper / left) padding and (lower / right) padding
     pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
