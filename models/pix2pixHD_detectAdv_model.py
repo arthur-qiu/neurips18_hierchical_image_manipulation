@@ -467,7 +467,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
 
         self.input_label = input_mask.cpu().data[0]
-        self.init_predict_label = Image.fromarray(init_predict_img)
+        self.init_predict_label = np.array(init_predict_img)
         self.input_label1 = input_mask1.cpu().data[0]
 
 
