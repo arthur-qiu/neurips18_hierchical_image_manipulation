@@ -457,6 +457,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         init_predict_img = Image.fromarray(init_predict_label)
         init_predict_draw = ImageDraw.Draw(init_predict_img)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+            print(cls_pred*30%255)
             init_predict_draw.rectangle((x1, y1, x2, y2), outline=cls_pred*30%255)
 
         detections = self.netS(normed_fake_image)
