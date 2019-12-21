@@ -500,8 +500,11 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         normed_fake_image = (fake_image + 1.0) / 2
         normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
 
+        num_class = 80
+        conf_threshold = 0.8
+
         detections = self.netS(normed_real_image)
-        detections = non_max_suppression(detections, 0.8, 0.4)[0]
+        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         # detections = rescale_boxes(detections, self.yolo_size, real_image.shape[2:])
         init_predict_label = util.tensor2im(real_image.cpu().data[0])
         init_predict_img = Image.fromarray(init_predict_label)
@@ -512,9 +515,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             init_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
         detections = self.netS(normed_fake_image)
-        print(detections)
-        print(detections.shape)
-        detections = non_max_suppression(detections, 0.8, 0.4)[0]
+        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         ori_predict_label = util.tensor2im(fake_image.cpu().data[0])
         ori_predict_img = Image.fromarray(ori_predict_label)
         ori_predict_draw = ImageDraw.Draw(ori_predict_img)
@@ -524,51 +525,39 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             ori_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
 
-        # # semantic attack starts
-        # alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
-        # alpha = Variable(alpha, requires_grad=True)
-        # alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
-        # fake_feature_const = fake_feature.detach().clone()
-        # fake_feature1_const = fake_feature1.detach().clone()
-        #
-        # acc_list = []
-        # shape = real_image.size()
-        #
-        # for i in range(20):
-        #     alpha_optimizer.zero_grad()
-        #     self.netS.zero_grad()
-        #
-        #     # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-        #     alpha_in = torch.clamp(alpha, 0.6, 1.0)
-        #     semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
-        #     x_hat = (semantic_image + 1.0) / 2
-        #     x_hat, _ = pad_to_square(normed_fake_image, 0)
-        #
-        #     total_loss = None
-        #     num_pred = 0.0
-        #     removed = 0.0
-        #
-        #
-        #     x_normal = (x_hat - self.seg_mean) / self.seg_std
-        #     logits = self.netS(x_normal)[0]
-        #     # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
-        #     hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
-        #     pred = torch.max(logits, 1)[1]
-        #
-        #
-        #     if i ==0:
-        #         ori_predict_map = label2id_tensor(pred.unsqueeze(1))
-        #         ori_size = ori_predict_map.size()
-        #         ori_oneHot_size = (ori_size[0], self.opt.label_nc, ori_size[2], ori_size[3])
-        #         ori_predict_label = torch.cuda.FloatTensor(torch.Size(ori_oneHot_size)).zero_()
-        #         self.ori_predict_label = ori_predict_label.scatter_(1, ori_predict_map.data.long().cuda(), 1.0).cpu().data[0]
-        #
-        #     print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
-        #     print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
-        #     hou_loss.backward()
-        #     alpha_optimizer.step()
-        #
-        #
+        # semantic attack starts
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
+        alpha = Variable(alpha, requires_grad=True)
+        alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
+        fake_feature_const = fake_feature.detach().clone()
+        fake_feature1_const = fake_feature1.detach().clone()
+
+        acc_list = []
+
+        for i in range(20):
+
+            alpha_optimizer.zero_grad()
+            self.netS.zero_grad()
+
+            alpha_in = torch.clamp(alpha, 0.6, 1.0)
+            semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
+            x_hat = (semantic_image + 1.0) / 2
+            x_hat, _ = pad_to_square(x_hat, 0)
+            out = self.netS(x_hat)[0]
+            cfs = nn.functional.sigmoid(out[:, 4])
+            mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
+            num_pred = torch.numel(cfs)
+            removed = torch.sum((cfs < conf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
+
+            total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
+            acc = removed / float(num_pred)
+            acc_list.append(acc)
+
+            total_loss.backward()
+            alpha_optimizer.step()
+
+            print('acc: %.3f' % (acc))
+            print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
 
 
 
