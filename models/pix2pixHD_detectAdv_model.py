@@ -444,16 +444,27 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             fake_image = self.netG.forward(cond_image, input_mask1, mask_in)
             fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
 
-        normed_fake_image = (fake_image1 + 1.0) / 2
-        normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
-        detections = self.netS(normed_fake_image)
-        detections = non_max_suppression(detections, 0.8, 0.4)[0]
+        normed_real_image = (real_image + 1.0) / 2
+        normed_real_image, _ = pad_to_square(normed_real_image, 0)
 
+        normed_fake_image = (fake_image + 1.0) / 2
+        normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
+
+        detections = self.netS(normed_real_image)
+        detections = non_max_suppression(detections, 0.8, 0.4)[0]
         init_predict_label = util.tensor2im(real_image.cpu().data[0])
         init_predict_img = Image.fromarray(init_predict_label)
         init_predict_draw = ImageDraw.Draw(init_predict_img)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
             init_predict_draw.rectangle((x1, y1, x2, y2), outline='red')
+
+        detections = self.netS(normed_fake_image)
+        detections = non_max_suppression(detections, 0.8, 0.4)[0]
+        ori_predict_label = util.tensor2im(fake_image.cpu().data[0])
+        ori_predict_img = Image.fromarray(ori_predict_label)
+        ori_predict_draw = ImageDraw.Draw(ori_predict_img)
+        for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+            ori_predict_draw.rectangle((x1, y1, x2, y2), outline='red')
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
@@ -461,14 +472,10 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         self.input_image = cond_image.cpu().data[0]
 
         # self.perturb_image = ((x_hat - 0.5) * 2).cpu().data[0]
-
-
-
-
         self.input_label = input_mask.cpu().data[0]
         self.init_predict_label = np.array(init_predict_img)
         self.input_label1 = input_mask1.cpu().data[0]
-
+        self.ori_predict_label = np.array(ori_predict_img)
 
         print(detections)
 
@@ -618,7 +625,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             ('init_predict_label', self.init_predict_label),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
             # ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
-            # ('ori_predict_label', util.tensor2label(self.ori_predict_label, self.opt.label_nc)),
+            ('ori_predict_label', self.ori_predict_label),
             ])
 
     def save(self, which_epoch):
