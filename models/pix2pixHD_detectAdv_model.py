@@ -478,11 +478,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             x_hat, _ = pad_to_square(x_hat, 0)
 
-            total_loss = torch.sum(x_hat)
+            out = self.netS(x_hat)[0]
+
+            total_loss = torch.sum(out)
             total_loss.backward()
             alpha_optimizer.step()
 
-            # out = self.netS(x_hat)[0]
             # cfs = nn.functional.sigmoid(out[:, 4]).cuda()
 
             # mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
