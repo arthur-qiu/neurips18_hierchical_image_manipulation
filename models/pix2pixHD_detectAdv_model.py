@@ -17,7 +17,7 @@ import util.util as util
 from collections import OrderedDict
 from seg.data_process import id2label_tensor, label2id_tensor
 from detect.yolo_models import *
-from detect.utils import load_classes
+from detect.utils import load_classes, rescale_boxes
 import math
 
 NULLVAL = 0.0
@@ -194,7 +194,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
         # init yolo
-        self.netS = Darknet("detect/yolov3.cfg", img_size=416).cuda()
+        self.yolo_size = 416
+        self.netS = Darknet("detect/yolov3.cfg", img_size=self.yolo_size).cuda()
         self.netS.load_darknet_weights("pretrain/yolov3.weights")
         self.netS.eval()
         self.classes = load_classes("detect/coco.names")
@@ -447,6 +448,15 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, 0.8, 0.4)
+        print(real_image.shape[2:])
+        detections = rescale_boxes(detections, self.yolo_size, real_image.shape[2:])
+        # for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+        #     box_w = x2 - x1
+        #     box_h = y2 - y1
+
+
+
+
         print(detections)
 
         # TODO finish function
@@ -723,7 +733,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
             ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
             ('ori_predict_label', util.tensor2label(self.ori_predict_label, self.opt.label_nc)),
-            ('target_label', util.tensor2label(self.target_label, self.opt.label_nc)),
             ])
 
     def save(self, which_epoch):
