@@ -16,7 +16,6 @@ from .layer_util import *
 import util.util as util
 from collections import OrderedDict
 from seg.data_process import id2label_tensor, label2id_tensor
-from seg.segment import DRNSeg
 from detect.yolo_models import *
 from detect.utils import load_classes
 import math
