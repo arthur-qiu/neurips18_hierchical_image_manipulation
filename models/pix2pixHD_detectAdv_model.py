@@ -39,6 +39,73 @@ def pad_to_square(img, pad_value):
 
     return img, pad
 
+
+def attack_dag(net, data_x, args_attack_iteration, args_clip, args_threshold, lr=0.005, num_class=80, threshold=0.5, target=False):
+    # loss = torch.nn.CrossEntropyLoss()
+    x = data_x.clone().cuda()
+    noise = torch.zeros(x.size()).cuda()
+
+    # x = Variable(x, requires_grad=True)
+    # noise = Variable(noise, requires_grad=True)
+
+    # Compute the range of noise
+    acc_list = []
+    shape = x.size()
+    batch_size = shape[0]
+
+    for i in range(args_attack_iteration):
+        noise_var = Variable(noise, requires_grad=True)
+        x_hat = torch.clamp(Variable(x, requires_grad=True)
+                            + noise_var, 0.0, 1.0)
+        final, outputs = net(x_hat)
+        # final2 = final.transpose(1,2).transpose( 2,3)
+        total_loss = None
+        num_pred = 0.0
+        removed = 0.0
+        for index, out in enumerate(outputs):
+            num_anchor = out.shape[1] // (num_class + 5)
+            out = out.view(batch_size * num_anchor, num_class + 5,
+                           out.shape[2], out.shape[3])
+            cfs = torch.nn.functional.sigmoid(out[:, 4])
+            mask = (cfs >= threshold).type(torch.FloatTensor)
+            if target:
+                out_pred = out[:, 5:].max(1)[1]
+                target_class_mask = (out_pred == 0).type(torch.FloatTensor)
+                mask = mask * target_class_mask
+                mask = mask.cuda()
+                num_pred += torch.sum(target_class_mask).data.cpu().numpy()
+                removed += torch.sum((cfs < threshold).type(torch.FloatTensor)
+                                     * target_class_mask).data.cpu().numpy()
+            else:
+
+                num_pred += torch.numel(cfs)
+                removed += torch.sum((cfs < threshold).type(torch.FloatTensor)).data.cpu().numpy()
+
+                mask = mask.cuda()
+
+            loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
+            if total_loss is None:
+                total_loss = loss
+            else:
+                total_loss += loss
+
+        acc = removed / float(num_pred)
+        acc_list.append(acc)
+        noise_val = np.sqrt(np.mean(noise.cpu().numpy() ** 2))
+        print("noise {}".format(noise_val))
+
+        print("acc {}".format(acc))
+
+        if noise_val > args_clip or acc >= args_threshold:
+            return torch.clamp(x + noise, 0.0, 1.0).cpu(), final, (torch.clamp(x + noise, 0.0, 1.0) - x).cpu(), acc_list
+
+        total_loss.backward()
+        grad = noise_var.grad.data
+        perturb = grad / (torch.max(torch.abs(grad)) + 1e-10)
+        noise -= lr * perturb
+
+    return torch.clamp(x + noise, 0.0, 1.0).cpu(), final, (torch.clamp(x + noise, 0.0, 1.0) - x).cpu(), acc_list
+
 class houdini_loss(nn.Module):
     def __init__(self, use_cuda=True, num_class=19, ignore_index=None):
         super(houdini_loss, self).__init__()
@@ -199,24 +266,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         self.netS.load_darknet_weights("pretrain/yolov3.weights")
         self.netS.eval()
         self.classes = load_classes("detect/coco.names")
-        #TODO load net here
-
-        # # init segnet
-        # seg_mean = torch.FloatTensor([0.29010095242892997, 0.32808144844279574, 0.28696394422942517]).view(1, 3, 1, 1)
-        # self.seg_mean = Variable(seg_mean.cuda())
-        # seg_std = torch.FloatTensor([0.1829540508368939, 0.18656561047509476, 0.18447508988480435]).view(1, 3, 1, 1)
-        # self.seg_std = Variable(seg_std.cuda())
-        # single_model = DRNSeg('drn_d_22', 19, pretrained_model=None, pretrained=False)
-        # # single_model.load_state_dict(torch.load('pretrain/drn_d_22_cityscapes.pth'))
-        # # self.netS = nn.DataParallel(single_model).cuda()
-        # self.netS = torch.nn.DataParallel(single_model)
-        # # self.netS.load_state_dict(torch.load('./pretrain/model_best.pth.tar')['state_dict'])
-        # self.netS.load_state_dict(torch.load('./pretrain//checkpoint_200.pth.tar')['state_dict'])
-        # # self.netS.load_state_dict(torch.load('../drn/checkpoint_190.pth.tar')['state_dict'])
-        #
-        # self.netS = self.netS.cuda()
-        # # init attack
-        # self.houdini_loss = houdini_loss(ignore_index=255)
 
     def name(self):
         return 'Pix2PixHDModel_detectAdv'
@@ -444,6 +493,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             fake_image = self.netG.forward(cond_image, input_mask1, mask_in)
             fake_image1 = self.netG.g_out((fake_feature*0.2 + fake_feature1*0.8), ctx_feats, cond_image, mask_in)
 
+
         normed_real_image = (real_image + 1.0) / 2
         normed_real_image, _ = pad_to_square(normed_real_image, 0)
 
@@ -462,6 +512,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             init_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
         detections = self.netS(normed_fake_image)
+        print(detections)
+        print(detections.shape)
         detections = non_max_suppression(detections, 0.8, 0.4)[0]
         ori_predict_label = util.tensor2im(fake_image.cpu().data[0])
         ori_predict_img = Image.fromarray(ori_predict_label)
@@ -470,6 +522,56 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             temp_color = int(cls_pred)*30%255
             ori_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
             ori_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
+
+
+        # # semantic attack starts
+        # alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
+        # alpha = Variable(alpha, requires_grad=True)
+        # alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
+        # fake_feature_const = fake_feature.detach().clone()
+        # fake_feature1_const = fake_feature1.detach().clone()
+        #
+        # acc_list = []
+        # shape = real_image.size()
+        #
+        # for i in range(20):
+        #     alpha_optimizer.zero_grad()
+        #     self.netS.zero_grad()
+        #
+        #     # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
+        #     alpha_in = torch.clamp(alpha, 0.6, 1.0)
+        #     semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
+        #     x_hat = (semantic_image + 1.0) / 2
+        #     x_hat, _ = pad_to_square(normed_fake_image, 0)
+        #
+        #     total_loss = None
+        #     num_pred = 0.0
+        #     removed = 0.0
+        #
+        #
+        #     x_normal = (x_hat - self.seg_mean) / self.seg_std
+        #     logits = self.netS(x_normal)[0]
+        #     # hou_loss = self.houdini_loss(logits,target_labels.squeeze(1)) * 10
+        #     hou_loss = self.houdini_loss(logits * mask_logits, target_labels.squeeze(1) * mask_target.squeeze(1).long()) * 10
+        #     pred = torch.max(logits, 1)[1]
+        #
+        #
+        #     if i ==0:
+        #         ori_predict_map = label2id_tensor(pred.unsqueeze(1))
+        #         ori_size = ori_predict_map.size()
+        #         ori_oneHot_size = (ori_size[0], self.opt.label_nc, ori_size[2], ori_size[3])
+        #         ori_predict_label = torch.cuda.FloatTensor(torch.Size(ori_oneHot_size)).zero_()
+        #         self.ori_predict_label = ori_predict_label.scatter_(1, ori_predict_map.data.long().cuda(), 1.0).cpu().data[0]
+        #
+        #     print('acc: %.3f' % ((pred == target_labels).cpu().data.numpy().sum() / (256 * 256)))
+        #     print('iteration %d loss %.3f' % (int(i), hou_loss.cpu().data.numpy()))
+        #     hou_loss.backward()
+        #     alpha_optimizer.step()
+        #
+        #
+
+
+
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
@@ -482,8 +584,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         self.input_label1 = input_mask1.cpu().data[0]
         self.ori_predict_label = np.array(ori_predict_img)
 
-
-        # TODO finish function
 
     def interp_attack(self, label, label1, label2, inst, inst1, image, mask_in, mask_out, mask_target):
         # Encode Inputs
