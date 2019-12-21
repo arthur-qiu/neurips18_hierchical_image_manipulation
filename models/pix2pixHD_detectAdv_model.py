@@ -448,14 +448,21 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, 0.8, 0.4)
-        print(real_image.shape[2:])
         detections = rescale_boxes(detections[0], self.yolo_size, real_image.shape[2:])
         # for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+
         #     box_w = x2 - x1
         #     box_h = y2 - y1
 
+        self.fake_image = fake_image.cpu().data[0]
+        self.fake_image1 = fake_image1.cpu().data[0]
+        self.real_image = real_image.cpu().data[0]
+        self.input_image = cond_image.cpu().data[0]
 
+        # self.perturb_image = ((x_hat - 0.5) * 2).cpu().data[0]
 
+        self.input_label = input_mask.cpu().data[0]
+        self.input_label1 = input_mask1.cpu().data[0]
 
         print(detections)
 
@@ -722,17 +729,17 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             ('input_image', util.tensor2im(self.input_image)),
             ('real_image', util.tensor2im(self.real_image)),
             ('synthesized_image', util.tensor2im(self.fake_image)),
-            ('perturb_image', util.tensor2im(self.perturb_image)),
+            # ('perturb_image', util.tensor2im(self.perturb_image)),
             ('synthesized_image1', util.tensor2im(self.fake_image1)),
             ])
 
     def get_current_visuals1(self):
         return OrderedDict([
             ('input_label', util.tensor2label(self.input_label, self.opt.label_nc)),
-            ('init_predict_label', util.tensor2label(self.init_predict_label, self.opt.label_nc)),
+            # ('init_predict_label', util.tensor2label(self.init_predict_label, self.opt.label_nc)),
             ('input_label1', util.tensor2label(self.input_label1, self.opt.label_nc)),
-            ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
-            ('ori_predict_label', util.tensor2label(self.ori_predict_label, self.opt.label_nc)),
+            # ('predict_label', util.tensor2label(self.predict_label, self.opt.label_nc)),
+            # ('ori_predict_label', util.tensor2label(self.ori_predict_label, self.opt.label_nc)),
             ])
 
     def save(self, which_epoch):
