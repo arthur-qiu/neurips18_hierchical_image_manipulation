@@ -466,6 +466,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
 
         acc_list = []
+        clf_threshold = 0.5
 
         for i in range(20):
 
@@ -480,9 +481,9 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             cfs = nn.functional.sigmoid(out[:, 4]).cuda()
 
-            mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
+            mask = (cfs >= clf_threshold).type(torch.FloatTensor).cuda()
             num_pred = torch.numel(cfs)
-            removed = torch.sum((cfs < conf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
+            removed = torch.sum((cfs < clf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
 
             total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
             acc = removed / float(num_pred)
