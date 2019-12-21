@@ -39,73 +39,6 @@ def pad_to_square(img, pad_value):
 
     return img, pad
 
-
-def attack_dag(net, data_x, args_attack_iteration, args_clip, args_threshold, lr=0.005, num_class=80, threshold=0.5, target=False):
-    # loss = torch.nn.CrossEntropyLoss()
-    x = data_x.clone().cuda()
-    noise = torch.zeros(x.size()).cuda()
-
-    # x = Variable(x, requires_grad=True)
-    # noise = Variable(noise, requires_grad=True)
-
-    # Compute the range of noise
-    acc_list = []
-    shape = x.size()
-    batch_size = shape[0]
-
-    for i in range(args_attack_iteration):
-        noise_var = Variable(noise, requires_grad=True)
-        x_hat = torch.clamp(Variable(x, requires_grad=True)
-                            + noise_var, 0.0, 1.0)
-        final, outputs = net(x_hat)
-        # final2 = final.transpose(1,2).transpose( 2,3)
-        total_loss = None
-        num_pred = 0.0
-        removed = 0.0
-        for index, out in enumerate(outputs):
-            num_anchor = out.shape[1] // (num_class + 5)
-            out = out.view(batch_size * num_anchor, num_class + 5,
-                           out.shape[2], out.shape[3])
-            cfs = torch.nn.functional.sigmoid(out[:, 4])
-            mask = (cfs >= threshold).type(torch.FloatTensor)
-            if target:
-                out_pred = out[:, 5:].max(1)[1]
-                target_class_mask = (out_pred == 0).type(torch.FloatTensor)
-                mask = mask * target_class_mask
-                mask = mask.cuda()
-                num_pred += torch.sum(target_class_mask).data.cpu().numpy()
-                removed += torch.sum((cfs < threshold).type(torch.FloatTensor)
-                                     * target_class_mask).data.cpu().numpy()
-            else:
-
-                num_pred += torch.numel(cfs)
-                removed += torch.sum((cfs < threshold).type(torch.FloatTensor)).data.cpu().numpy()
-
-                mask = mask.cuda()
-
-            loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
-            if total_loss is None:
-                total_loss = loss
-            else:
-                total_loss += loss
-
-        acc = removed / float(num_pred)
-        acc_list.append(acc)
-        noise_val = np.sqrt(np.mean(noise.cpu().numpy() ** 2))
-        print("noise {}".format(noise_val))
-
-        print("acc {}".format(acc))
-
-        if noise_val > args_clip or acc >= args_threshold:
-            return torch.clamp(x + noise, 0.0, 1.0).cpu(), final, (torch.clamp(x + noise, 0.0, 1.0) - x).cpu(), acc_list
-
-        total_loss.backward()
-        grad = noise_var.grad.data
-        perturb = grad / (torch.max(torch.abs(grad)) + 1e-10)
-        noise -= lr * perturb
-
-    return torch.clamp(x + noise, 0.0, 1.0).cpu(), final, (torch.clamp(x + noise, 0.0, 1.0) - x).cpu(), acc_list
-
 class houdini_loss(nn.Module):
     def __init__(self, use_cuda=True, num_class=19, ignore_index=None):
         super(houdini_loss, self).__init__()
@@ -264,7 +197,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         # init yolo
         self.netS = Darknet("detect/yolov3.cfg").cuda()
         self.netS.load_darknet_weights("pretrain/yolov3.weights")
-        self.netS.eval()
+        # self.netS.eval()
         self.classes = load_classes("detect/coco.names")
 
     def name(self):
