@@ -196,7 +196,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
         # init yolo
         self.netS = Darknet(opt.model_def, img_size=opt.img_size).cuda()
-        self.netS.load_darknet_weights("weights/yolov3.weights")
+        self.netS.load_darknet_weights("pretrain/yolov3.weights")
         self.netS.eval()
         self.classes = load_classes(opt.class_path)
         #TODO load net here
