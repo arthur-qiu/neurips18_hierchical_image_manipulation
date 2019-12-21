@@ -195,7 +195,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
         # init yolo
-        self.netS = Darknet(opt.model_def, img_size=opt.img_size).cuda()
+        self.netS = Darknet('detect/yolov3.cfg', img_size=416).cuda()
         self.netS.load_darknet_weights("pretrain/yolov3.weights")
         self.netS.eval()
         self.classes = load_classes(opt.class_path)
