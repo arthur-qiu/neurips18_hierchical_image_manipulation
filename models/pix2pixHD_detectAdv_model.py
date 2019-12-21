@@ -197,7 +197,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         # init yolo
         self.netS = Darknet("detect/yolov3.cfg").cuda()
         self.netS.load_darknet_weights("pretrain/yolov3.weights")
-        # self.netS.eval()
+        self.netS.eval()
         self.classes = load_classes("detect/coco.names")
 
     def name(self):
