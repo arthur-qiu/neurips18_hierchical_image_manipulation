@@ -457,8 +457,9 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         init_predict_img = Image.fromarray(init_predict_label)
         init_predict_draw = ImageDraw.Draw(init_predict_img)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-            print(cls_pred.item()*30%255)
-            init_predict_draw.rectangle((x1, y1, x2, y2), outline=int(cls_pred.item()*30%255))
+            temp_color = int(cls_pred)*30%255
+            init_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
+            init_predict_draw.text((x1, y1), self.classes[int(cls_pred)], fill=temp_color)
 
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, 0.8, 0.4)[0]
@@ -466,7 +467,9 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         ori_predict_img = Image.fromarray(ori_predict_label)
         ori_predict_draw = ImageDraw.Draw(ori_predict_img)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-            ori_predict_draw.rectangle((x1, y1, x2, y2), outline=int(cls_pred.item()*30%255))
+            temp_color = int(cls_pred)*30%255
+            ori_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
+            ori_predict_draw.text((x1, y1), self.classes[int(cls_pred)], fill=temp_color)
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
