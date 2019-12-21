@@ -449,7 +449,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, 0.8, 0.4)
         print(real_image.shape[2:])
-        detections = rescale_boxes(detections, self.yolo_size, real_image.shape[2:])
+        detections = rescale_boxes(detections[0], self.yolo_size, real_image.shape[2:])
         # for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
         #     box_w = x2 - x1
         #     box_h = y2 - y1
