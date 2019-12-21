@@ -544,7 +544,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             x_hat = (semantic_image + 1.0) / 2
             x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
-            cfs = nn.functional.sigmoid(out[:, 4])
+            cfs = nn.functional.sigmoid(out[:, 4]).cuda()
             mask = (cfs >= conf_threshold).type(torch.FloatTensor).cuda()
             num_pred = torch.numel(cfs)
             removed = torch.sum((cfs < conf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
