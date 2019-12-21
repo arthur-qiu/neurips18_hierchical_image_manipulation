@@ -476,11 +476,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
 
+            x_hat, _ = pad_to_square(x_hat, 0)
+
             total_loss = torch.sum(x_hat)
             total_loss.backward()
             alpha_optimizer.step()
 
-            # x_hat, _ = pad_to_square(x_hat, 0)
             # out = self.netS(x_hat)[0]
             # cfs = nn.functional.sigmoid(out[:, 4]).cuda()
 
