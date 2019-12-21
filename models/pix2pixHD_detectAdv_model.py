@@ -459,7 +459,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
             temp_color = int(cls_pred)*30%255
             init_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
-            init_predict_draw.text((x1, y1), self.classes[int(cls_pred)], fill=temp_color)
+            init_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, 0.8, 0.4)[0]
@@ -469,7 +469,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
             temp_color = int(cls_pred)*30%255
             ori_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
-            ori_predict_draw.text((x1, y1), self.classes[int(cls_pred)], fill=temp_color)
+            ori_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
@@ -482,7 +482,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         self.input_label1 = input_mask1.cpu().data[0]
         self.ori_predict_label = np.array(ori_predict_img)
 
-        print(detections)
 
         # TODO finish function
 
