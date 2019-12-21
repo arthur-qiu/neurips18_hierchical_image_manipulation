@@ -456,7 +456,8 @@ def train(train_loader, model, criterion, optimizer, epoch,
             target = target.float()
 
         input = input.cuda()
-        target = target.cuda(async=True)
+        target = target.cuda()
+        # target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
 
