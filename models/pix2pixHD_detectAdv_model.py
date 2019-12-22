@@ -17,7 +17,7 @@ import util.util as util
 from collections import OrderedDict
 from seg.data_process import id2label_tensor, label2id_tensor
 from detect.yolo_models import *
-from detect.utils import load_classes, rescale_boxes
+from detect.utils import load_classes, xywh2xyxy, rescale_boxes
 import math
 from PIL import Image, ImageFont, ImageDraw
 
@@ -486,7 +486,10 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             cfs = nn.functional.sigmoid(out[:, 4]).cuda()
 
-            mask = (cfs >= clf_threshold).type(torch.FloatTensor).cuda()
+            xywh = out[:, :4].clone().detach().cuda()
+            xyxy = xywh2xyxy(xywh) 
+
+            mask = (cfs >= clf_threshold & xyxy[:,0] >= target_x_min & xyxy[:,1] >= target_y_min & xyxy[:,2] <= target_x_max & xyxy[:,3] <= target_y_max).type(torch.FloatTensor).cuda()
             num_pred = torch.numel(cfs)
             removed = torch.sum((cfs < clf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
 
