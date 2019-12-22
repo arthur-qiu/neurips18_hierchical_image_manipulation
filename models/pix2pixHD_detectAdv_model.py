@@ -449,6 +449,10 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
+        print(detections)
+        print(mask_target.shape)
+        target_index = torch.nonzero(mask_target[0])
+        print(target_index)
         ori_predict_label = util.tensor2im(fake_image.cpu().data[0])
         ori_predict_img = Image.fromarray(ori_predict_label)
         ori_predict_draw = ImageDraw.Draw(ori_predict_img)
@@ -467,7 +471,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         acc_list = []
         clf_threshold = 0.5
 
-        for i in range(100):
+        for i in range(20):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
