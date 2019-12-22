@@ -449,10 +449,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
         detections = self.netS(normed_fake_image)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
-        print(detections)
-        print(mask_target.shape)
-        target_index = torch.nonzero(mask_target[0])
-        print(target_index)
+        target_index = torch.nonzero(mask_target[0][0])
+        target_y_min = torch.min(target_index[:,0])
+        target_y_max = torch.max(target_index[:, 0])
+        target_x_min = torch.min(target_index[:, 1])
+        target_x_max = torch.max(target_index[:, 1])
+        print(target_y_min,target_y_max,target_x_min,target_x_max)
         ori_predict_label = util.tensor2im(fake_image.cpu().data[0])
         ori_predict_img = Image.fromarray(ori_predict_label)
         ori_predict_draw = ImageDraw.Draw(ori_predict_img)
