@@ -504,6 +504,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             print('acc: %.3f' % (acc))
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
         print(torch.max(mask * out[:, 4].cuda()))
+        detections = non_max_suppression(out, conf_threshold, 0.4)[0]
+        print(detections)
 
         detections = self.netS(x_hat)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
