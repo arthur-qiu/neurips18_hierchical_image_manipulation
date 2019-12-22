@@ -428,10 +428,10 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
 
         normed_real_image = (real_image + 1.0) / 2
-        normed_real_image, _ = pad_to_square(normed_real_image, 0)
+        # normed_real_image, _ = pad_to_square(normed_real_image, 0)
 
         normed_fake_image = (fake_image + 1.0) / 2
-        normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
+        # normed_fake_image, _ = pad_to_square(normed_fake_image, 0)
 
         num_class = 80
         conf_threshold = 0.8
@@ -454,7 +454,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         target_y_max = torch.max(target_index[:, 0]).float()
         target_x_min = torch.min(target_index[:, 1]).float()
         target_x_max = torch.max(target_index[:, 1]).float()
-        print(target_y_min,target_y_max,target_x_min,target_x_max)
         ori_predict_label = util.tensor2im(fake_image.cpu().data[0])
         ori_predict_img = Image.fromarray(ori_predict_label)
         ori_predict_draw = ImageDraw.Draw(ori_predict_img)
@@ -481,7 +480,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             alpha_in = torch.clamp(alpha, 0.6, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
-            x_hat, _ = pad_to_square(x_hat, 0)
+            # x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
 
             # cfs = nn.functional.sigmoid(out[:, 4]).cuda()
