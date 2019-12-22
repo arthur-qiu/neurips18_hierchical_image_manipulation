@@ -484,8 +484,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
 
-            # cfs = nn.functional.sigmoid(out[:, 4]).cuda()
-            cfs = nn.functional.sigmoid(out[:, 5]).cuda()
+            cfs = nn.functional.sigmoid(out[:, 4]).cuda()
+            # cfs = nn.functional.sigmoid(out[:, 5]).cuda()
 
             xywh = out[:, :4].clone().detach().cuda()
             xyxy = xywh2xyxy(xywh)
@@ -503,7 +503,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             print('acc: %.3f' % (acc))
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
-        print(torch.max(out[:, 5]))
+        print(torch.max(mask * out[:, 4].cuda()))
 
         detections = self.netS(x_hat)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
