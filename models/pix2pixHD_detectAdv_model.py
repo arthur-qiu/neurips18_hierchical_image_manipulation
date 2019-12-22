@@ -437,7 +437,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         conf_threshold = 0.8
 
         detections = self.netS(normed_real_image)
-        mask_loss = mask_target.repeat(detections.shape[1], 1, 1)
+        mask_loss = mask_target[0].repeat(detections.shape[1], 1, 1)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         # detections = rescale_boxes(detections, self.yolo_size, real_image.shape[2:])
         init_predict_label = util.tensor2im(real_image.cpu().data[0])
