@@ -484,7 +484,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
 
-            cfs = nn.functional.sigmoid(out[:, 4]).cuda()
+            # cfs = nn.functional.sigmoid(out[:, 4]).cuda()
+            cfs = nn.functional.sigmoid(out[:, 5]).cuda()
 
             xywh = out[:, :4].clone().detach().cuda()
             xyxy = xywh2xyxy(xywh)
