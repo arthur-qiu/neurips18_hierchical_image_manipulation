@@ -437,6 +437,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         conf_threshold = 0.8
 
         detections = self.netS(normed_real_image)
+        mask_loss = mask_target.repeat(detections.shape(1), 1, 1)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         # detections = rescale_boxes(detections, self.yolo_size, real_image.shape[2:])
         init_predict_label = util.tensor2im(real_image.cpu().data[0])
@@ -464,11 +465,10 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
         fake_feature_const = fake_feature.detach().clone()
         fake_feature1_const = fake_feature1.detach().clone()
-
         acc_list = []
         clf_threshold = 0.5
 
-        for i in range(20):
+        for i in range(100):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
@@ -485,7 +485,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             num_pred = torch.numel(cfs)
             removed = torch.sum((cfs < clf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
 
-            total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
+            total_loss = torch.sum(mask_loss * mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
             acc = removed / float(num_pred)
             acc_list.append(acc)
 
