@@ -473,7 +473,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         acc_list = []
         clf_threshold = 0.5
 
-        for i in range(200):
+        for i in range(100):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
@@ -503,6 +503,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             print('acc: %.3f' % (acc))
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
+        print(torch.max(out[:, 5]))
 
         detections = self.netS(x_hat)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
