@@ -484,8 +484,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
 
-            cfs = nn.functional.sigmoid(out[:, 4]).cuda()
-            # cfs = nn.functional.sigmoid(out[:, 5]).cuda()
+            # cfs = nn.functional.sigmoid(out[:, 4]).cuda()
+            cfs = nn.functional.sigmoid(out[:, 5]).cuda()
 
             xywh = out[:, :4].clone().detach().cuda()
             xyxy = xywh2xyxy(xywh)
@@ -505,12 +505,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
 
         detections = self.netS(x_hat)
-        cfs = nn.functional.sigmoid(detections[0][:, 4]).cuda()
+        cfs = nn.functional.sigmoid(detections[0][:, 5]).cuda()
         xywh = detections[0][:, :4].clone().detach().cuda()
         xyxy = xywh2xyxy(xywh)
         mask = ((cfs >= clf_threshold) & (xyxy[:, 2] >= target_x_min) & (xyxy[:, 3] >= target_y_min) & (
                     xyxy[:, 0] <= target_x_max) & (xyxy[:, 1] <= target_y_max)).type(torch.FloatTensor).cuda()
-        print(torch.max(mask * detections[0][:, 4].cuda()))
+        print(torch.max(mask * detections[0][:, 5].cuda()))
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         print(detections)
 
