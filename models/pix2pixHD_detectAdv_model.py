@@ -473,7 +473,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         acc_list = []
         clf_threshold = 0.5
 
-        for i in range(20):
+        for i in range(200):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
