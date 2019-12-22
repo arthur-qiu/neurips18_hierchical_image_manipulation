@@ -510,8 +510,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         xyxy = xywh2xyxy(xywh)
         mask = ((cfs >= clf_threshold) & (xyxy[:, 0] >= target_x_min) & (xyxy[:, 1] >= target_y_min) & (
                     xyxy[:, 2] <= target_x_max) & (xyxy[:, 3] <= target_y_max)).type(torch.FloatTensor).cuda()
-        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         print(torch.max(mask * detections[0][:, 4].cuda()))
+        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         print(detections)
 
         detections = self.netS(x_hat)
