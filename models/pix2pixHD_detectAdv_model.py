@@ -489,7 +489,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             xywh = out[:, :4].clone().detach().cuda()
             xyxy = xywh2xyxy(xywh)
 
-            mask = ((cfs >= clf_threshold & xyxy[:,0] >= target_x_min) & (xyxy[:,1] >= target_y_min) & (xyxy[:,2] <= target_x_max) & (xyxy[:,3] <= target_y_max)).type(torch.FloatTensor).cuda()
+            mask = ((cfs >= clf_threshold) & (xyxy[:,0] >= target_x_min) & (xyxy[:,1] >= target_y_min) & (xyxy[:,2] <= target_x_max) & (xyxy[:,3] <= target_y_max)).type(torch.FloatTensor).cuda()
             num_pred = torch.numel(cfs)
             removed = torch.sum((cfs < clf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
 
