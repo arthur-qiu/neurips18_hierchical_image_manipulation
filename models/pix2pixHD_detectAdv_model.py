@@ -500,8 +500,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
         detections = self.netS(x_hat)
         predict_label = util.tensor2im(((x_hat.clone()+ 1.0)/2).cpu().data[0])
+        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         if detections is not None:
-            detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
             predict_img = Image.fromarray(predict_label)
             predict_draw = ImageDraw.Draw(predict_img)
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
