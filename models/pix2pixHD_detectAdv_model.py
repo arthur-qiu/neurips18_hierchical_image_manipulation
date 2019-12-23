@@ -443,7 +443,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         init_predict_img = Image.fromarray(init_predict_label)
         init_predict_draw = ImageDraw.Draw(init_predict_img)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-            temp_color = int(cls_pred)*30%255
+            if cls_pred == 0:
+                temp_color = (255, 0, 0)
+            elif cls_pred == 2:
+                temp_color = (255, 165, 0)
+            else:
+                continue
             init_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
             init_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
@@ -458,7 +463,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         ori_predict_img = Image.fromarray(ori_predict_label)
         ori_predict_draw = ImageDraw.Draw(ori_predict_img)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-            temp_color = int(cls_pred)*30%255
+            if cls_pred == 0:
+                temp_color = (255, 0, 0)
+            elif cls_pred == 2:
+                temp_color = (255, 165, 0)
+            else:
+                continue
             ori_predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
             ori_predict_draw.text((x1, y1-12), self.classes[int(cls_pred)], fill=temp_color)
 
@@ -513,7 +523,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
         clf_threshold = 0.5
 
-        for i in range(100):
+        for i in range(50):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
@@ -548,7 +558,12 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         predict_draw = ImageDraw.Draw(predict_img)
         if detections is not None:
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                temp_color = int(cls_pred) * 30 % 255
+                if cls_pred == 0:
+                    temp_color = (255, 0, 0)
+                elif cls_pred == 2:
+                    temp_color = (255, 165, 0)
+                else:
+                    continue
                 predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
                 predict_draw.text((x1, y1 - 12), self.classes[int(cls_pred)], fill=temp_color)
 
