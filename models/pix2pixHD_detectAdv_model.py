@@ -499,14 +499,15 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
 
         detections = self.netS(x_hat)
-        detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         predict_label = util.tensor2im(((x_hat.clone()+ 1.0)/2).cpu().data[0])
-        predict_img = Image.fromarray(predict_label)
-        predict_draw = ImageDraw.Draw(predict_img)
-        for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-            temp_color = int(cls_pred) * 30 % 255
-            predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
-            predict_draw.text((x1, y1 - 12), self.classes[int(cls_pred)], fill=temp_color)
+        if detections is not None:
+            detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
+            predict_img = Image.fromarray(predict_label)
+            predict_draw = ImageDraw.Draw(predict_img)
+            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                temp_color = int(cls_pred) * 30 % 255
+                predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
+                predict_draw.text((x1, y1 - 12), self.classes[int(cls_pred)], fill=temp_color)
 
         # pixel attack ends
 
