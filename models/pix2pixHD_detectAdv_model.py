@@ -474,8 +474,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             noise_optimizer.zero_grad()
             self.netS.zero_grad()
 
-            x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
-            # x_hat = torch.clamp(ori_image + noise * mask_in, 0.0, 1.0)
+            # x_hat = torch.clamp(ori_image + noise, 0.0, 1.0)
+            x_hat = torch.clamp(ori_image + noise * mask_in, 0.0, 1.0)
             out = self.netS(x_hat)[0]
             cfs = nn.functional.sigmoid(out[:, 4]).cuda()
 
@@ -499,7 +499,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
 
         detections = self.netS(x_hat)
-        predict_label = util.tensor2im(((x_hat.clone()+ 1.0)/2).cpu().data[0])
+        predict_label = util.tensor2im(((x_hat.clone() - 0.5)*2).cpu().data[0])
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
         if detections is not None:
             predict_img = Image.fromarray(predict_label)
