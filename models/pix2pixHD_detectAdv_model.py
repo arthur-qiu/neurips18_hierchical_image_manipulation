@@ -516,7 +516,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         # # pixel attack ends
 
         # semantic attack starts
-        alpha = torch.zeros(fake_feature.size()).cuda() + 0.8
+        alpha = torch.zeros(fake_feature.size()).cuda() + 0.75
         alpha = Variable(alpha, requires_grad=True)
         alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
         fake_feature_const = fake_feature.detach().clone()
@@ -529,7 +529,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             self.netS.zero_grad()
 
             # alpha_in = alpha
-            alpha_in = torch.clamp(alpha, 0.55, 1.0)
+            alpha_in = torch.clamp(alpha, 0.5, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             # x_hat, _ = pad_to_square(x_hat, 0)
