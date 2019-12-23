@@ -467,7 +467,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         # noise = torch.zeros(real_image.size()).cuda()
         # noise = Variable(noise, requires_grad=True)
         # noise_optimizer = torch.optim.Adam([noise], lr=1e-2)
-        # acc_list = []
         # clf_threshold = 0.5
         # # mask_logits = mask_target.repeat(1, 19, 1, 1)
         # for i in range(20):
@@ -484,18 +483,13 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         #
         #     mask = ((cfs >= clf_threshold) & (xyxy[:, 2] >= target_x_min) & (xyxy[:, 3] >= target_y_min) & (
         #                 xyxy[:, 0] <= target_x_max) & (xyxy[:, 1] <= target_y_max)).type(torch.FloatTensor).cuda()
-        #     num_pred = torch.numel(cfs)
-        #     removed = torch.sum((cfs < clf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
         #
         #     total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
-        #     acc = removed / float(num_pred)
-        #     acc_list.append(acc)
         #
         #     total_loss.backward()
         #     noise_optimizer.step()
         #
         #     print(torch.max(mask * out[:, 4].cuda()))
-        #     print('acc: %.3f' % (acc))
         #     print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
         #
         # detections = self.netS(x_hat)
@@ -517,7 +511,6 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         alpha_optimizer = torch.optim.Adam([alpha], lr=0.01)
         fake_feature_const = fake_feature.detach().clone()
         fake_feature1_const = fake_feature1.detach().clone()
-        acc_list = []
         clf_threshold = 0.5
 
         for i in range(100):
@@ -532,24 +525,20 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             # x_hat, _ = pad_to_square(x_hat, 0)
             out = self.netS(x_hat)[0]
 
-            cfs = nn.functional.sigmoid(out[:, 5]).cuda()
+            cfs = nn.functional.sigmoid(out[:, 4]).cuda()
+            cfs_human = nn.functional.sigmoid(out[:, 5]).cuda()
 
             xywh = out[:, :4].clone().detach().cuda()
             xyxy = xywh2xyxy(xywh)
 
-            mask = ((cfs >= clf_threshold) & (xyxy[:,2] >= target_x_min) & (xyxy[:,3] >= target_y_min) & (xyxy[:,0] <= target_x_max) & (xyxy[:,1] <= target_y_max)).type(torch.FloatTensor).cuda()
-            num_pred = torch.numel(cfs)
-            removed = torch.sum((cfs < clf_threshold).type(torch.FloatTensor)).data.cpu().numpy()
+            mask = ((cfs >= clf_threshold) & (cfs_human >= clf_threshold) & (xyxy[:,2] >= target_x_min) & (xyxy[:,3] >= target_y_min) & (xyxy[:,0] <= target_x_max) & (xyxy[:,1] <= target_y_max)).type(torch.FloatTensor).cuda()
 
-            total_loss = torch.sum(mask * ((cfs - 0) ** 2 - (1 - cfs) ** 2))
-            acc = removed / float(num_pred)
-            acc_list.append(acc)
+            total_loss = torch.sum(mask * ((cfs * cfs_human - 0) ** 2 - (1 - cfs * cfs_human) ** 2))
 
             total_loss.backward()
             alpha_optimizer.step()
 
-            print(torch.max(mask * out[:, 5].cuda()))
-            print('acc: %.3f' % (acc))
+            print(torch.max(mask * out[:, 4] * out[:, 5].cuda()))
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
 
         detections = self.netS(x_hat)
