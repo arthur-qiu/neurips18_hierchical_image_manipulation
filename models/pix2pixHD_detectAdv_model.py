@@ -525,8 +525,8 @@ class Pix2PixHDModel_detectAdv(BaseModel):
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
 
-            alpha_in = alpha
-            # alpha_in = torch.clamp(alpha, 0.2, 1.0)
+            # alpha_in = alpha
+            alpha_in = torch.clamp(alpha, 0.2, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             # x_hat, _ = pad_to_square(x_hat, 0)
@@ -567,10 +567,11 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         predict_label = util.tensor2im(semantic_image.cpu().data[0])
         predict_img = Image.fromarray(predict_label)
         predict_draw = ImageDraw.Draw(predict_img)
-        for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-            temp_color = int(cls_pred) * 30 % 255
-            predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
-            predict_draw.text((x1, y1 - 12), self.classes[int(cls_pred)], fill=temp_color)
+        if detections is not None:
+            for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                temp_color = int(cls_pred) * 30 % 255
+                predict_draw.rectangle((x1, y1, x2, y2), outline=temp_color)
+                predict_draw.text((x1, y1 - 12), self.classes[int(cls_pred)], fill=temp_color)
 
         self.fake_image = fake_image.cpu().data[0]
         self.fake_image1 = fake_image1.cpu().data[0]
