@@ -523,7 +523,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
         clf_threshold = 0.5
 
-        for i in range(100):
+        for i in range(200):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
