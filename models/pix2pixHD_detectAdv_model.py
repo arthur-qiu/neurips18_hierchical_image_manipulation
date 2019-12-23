@@ -523,7 +523,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
         clf_threshold = 0.5
 
-        for i in range(30):
+        for i in range(100):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
@@ -545,11 +545,11 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             total_loss = torch.sum(mask * ((cfs * cfs_human - 0) ** 2 - (1 - cfs * cfs_human) ** 2))
 
-            total_loss.backward()
-            alpha_optimizer.step()
-
             print(torch.max(mask * out[:, 4] * out[:, 5].cuda()))
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
+
+            total_loss.backward()
+            alpha_optimizer.step()
 
         detections = self.netS(x_hat)
         detections = non_max_suppression(detections, conf_threshold, 0.4)[0]
