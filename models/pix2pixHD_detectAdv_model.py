@@ -545,7 +545,7 @@ class Pix2PixHDModel_detectAdv(BaseModel):
 
             total_loss = torch.sum(mask * ((cfs * cfs_human - 0) ** 2 - (1 - cfs * cfs_human) ** 2))
 
-            confidence = torch.max(mask * out[:, 4] * out[:, 5].item())
+            confidence = torch.max(mask * out[:, 4] * out[:, 5]).item()
             print(confidence)
             print('iteration %d loss %.3f' % (int(i), total_loss.cpu().data.numpy()))
             if confidence < 0.8:
