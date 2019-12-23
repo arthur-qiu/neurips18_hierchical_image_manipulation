@@ -523,13 +523,13 @@ class Pix2PixHDModel_detectAdv(BaseModel):
         fake_feature1_const = fake_feature1.detach().clone()
         clf_threshold = 0.5
 
-        for i in range(200):
+        for i in range(100):
 
             alpha_optimizer.zero_grad()
             self.netS.zero_grad()
 
             # alpha_in = alpha
-            alpha_in = torch.clamp(alpha, 0.4, 1.0)
+            alpha_in = torch.clamp(alpha, 0.6, 1.0)
             semantic_image = self.netG.g_out((fake_feature_const * (1-alpha_in) + fake_feature1_const * alpha_in), ctx_feats, cond_image, mask_in)
             x_hat = (semantic_image + 1.0) / 2
             # x_hat, _ = pad_to_square(x_hat, 0)
